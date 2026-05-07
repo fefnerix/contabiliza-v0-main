@@ -43,11 +43,27 @@ jobs:
         SETUP_MODE: ${{ inputs.setup_mode || 'update' }}
         FORCE_ALL_MIGRATIONS: ${{ inputs.force_all_migrations || 'false' }}
       run: |
+        set -euo pipefail
+        
+        echo "🔎 Validating required GitHub Secrets..."
+        missing=0
+        for var in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_ID SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_PASSWORD; do
+          if [ -z "${!var:-}" ]; then
+            echo "❌ Missing required secret: $var"
+            missing=1
+          fi
+        done
+        
+        if [ "$missing" -eq 1 ]; then
+          echo "🛑 One or more required secrets are missing. Configure repository secrets and rerun."
+          exit 1
+        fi
+        
         echo "🔑 Logging into Supabase..."
-        supabase login --token $SUPABASE_ACCESS_TOKEN
+        supabase login --token "$SUPABASE_ACCESS_TOKEN"
         
         echo "🔗 Linking to project..."
-        supabase link --project-ref $SUPABASE_PROJECT_ID
+        supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
         
         echo "📊 Current setup mode: $SETUP_MODE"
         echo "🔄 Force all migrations: $FORCE_ALL_MIGRATIONS"
