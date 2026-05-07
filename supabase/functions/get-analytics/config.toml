@@ -1,0 +1,2 @@
+[functions.get-analytics]
+verify_jwt = true

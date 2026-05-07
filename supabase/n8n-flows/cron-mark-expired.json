@@ -1,0 +1,152 @@
+{
+  "name": "Cron Mark Expired Subscriptions",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 280]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL + '/rest/v1/poupeja_subscriptions'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "select", "value": "id,user_id,plan_type,current_period_end,poupeja_users(email,name)" },
+            { "name": "status", "value": "eq.active" },
+            { "name": "current_period_end", "value": "lt.now()" }
+          ]
+        }
+      },
+      "id": "get_expired",
+      "name": "Get Expired Candidates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 280]
+    },
+    {
+      "parameters": {
+        "batchSize": 1
+      },
+      "id": "loop_items",
+      "name": "Loop Expired",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [700, 280]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{$env.SUPABASE_URL + '/rest/v1/poupeja_subscriptions?id=eq.' + $json.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"status\":\"canceled\"}"
+      },
+      "id": "update_subscription",
+      "name": "Mark Canceled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [930, 150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL + '/rest/v1/poupeja_access_log'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"user_id\":\"{{$json.user_id}}\",\"action\":\"expired\",\"plan_type\":\"{{$json.plan_type}}\",\"source\":\"cron\"}"
+      },
+      "id": "insert_access_log",
+      "name": "Insert Access Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [930, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL + '/functions/v1/send-email'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"template\":\"expired\",\"to\":\"{{$json.poupeja_users.email}}\",\"data\":{\"name\":\"{{$json.poupeja_users.name}}\",\"url\":\"{{$env.APP_URL}}\"}}"
+      },
+      "id": "send_expired_email",
+      "name": "Send Expired Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [930, 410]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.DISCORD_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"content\":\"⚠️ Assinaturas marcadas como expiradas: {{$items('Get Expired Candidates').length}}\"}"
+      },
+      "id": "discord_alert",
+      "name": "Discord Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1180, 280]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Get Expired Candidates", "type": "main", "index": 0 }]] },
+    "Get Expired Candidates": { "main": [[{ "node": "Loop Expired", "type": "main", "index": 0 }]] },
+    "Loop Expired": {
+      "main": [
+        [
+          { "node": "Mark Canceled", "type": "main", "index": 0 },
+          { "node": "Insert Access Log", "type": "main", "index": 0 },
+          { "node": "Send Expired Email", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Discord Alert", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

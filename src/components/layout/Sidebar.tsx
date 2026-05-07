@@ -8,7 +8,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { LayoutDashboard, Receipt, BarChart3, Target, User, Settings, FolderOpen, Calendar, Crown, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Receipt, BarChart3, Target, User, Settings, FolderOpen, Calendar, Crown, LogOut, Shield, Users2, Webhook } from 'lucide-react';
 
 interface SidebarProps {
   onProfileClick?: () => void;
@@ -23,7 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
   const location = useLocation();
   
   // Verificar se estamos na página de administração
-  const isAdminPage = location.pathname === '/admin';
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   const handleLogout = async () => {
     await logout();
@@ -42,8 +42,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
   if (isAdmin && isAdminPage) {
     const adminMenuItems = [
       {
+        icon: LayoutDashboard,
+        label: 'Dashboard',
+        href: '/admin'
+      },
+      {
+        icon: Users2,
+        label: 'Clientes',
+        href: '/admin/customers'
+      },
+      {
+        icon: Webhook,
+        label: 'Checkouts',
+        href: '/admin/checkouts'
+      },
+      {
         icon: Settings,
         label: 'Configuraciones',
+        href: '/admin',
         action: () => {
           if (onConfigClick) {
             onConfigClick();
@@ -61,16 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
-          {adminMenuItems.map((item, index) => (
-            <Button
-              key={index}
-              variant="ghost"
-              className="w-full justify-start gap-3 px-4 py-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          {adminMenuItems.map((item) => (
+            <NavLink
+              key={item.label}
+              to={item.href}
               onClick={item.action}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                )
+              }
             >
               <item.icon className="h-5 w-5" />
               {item.label}
-            </Button>
+            </NavLink>
           ))}
           
           {/* Botão Perfil que executa função ao invés de navegar */}

@@ -29,7 +29,9 @@ import PlansPage from "./pages/PlansPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import ThankYouPage from "./pages/ThankYouPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminCheckoutsPage from "./pages/admin/AdminCheckoutsPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import NotFound from "./pages/NotFound";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -73,9 +75,25 @@ function App() {
                           path="/admin" 
                           element={
                             <AdminRoute>
-                              <AdminDashboard />
+                              <AdminDashboardPage />
                             </AdminRoute>
                           } 
+                        />
+                        <Route
+                          path="/admin/customers"
+                          element={
+                            <AdminRoute>
+                              <AdminCustomersPage />
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/checkouts"
+                          element={
+                            <AdminRoute>
+                              <AdminCheckoutsPage />
+                            </AdminRoute>
+                          }
                         />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

@@ -1,0 +1,99 @@
+{
+  "name": "Cron Expiration Warnings",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 260]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL + '/rest/v1/poupeja_subscriptions'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "select", "value": "user_id,current_period_end,plan_type,poupeja_users(email,name)" },
+            { "name": "status", "value": "eq.active" }
+          ]
+        }
+      },
+      "id": "get_expiring",
+      "name": "Get Expiring Subscriptions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst in1 = new Date(today); in1.setDate(today.getDate() + 1);\nconst in7 = new Date(today); in7.setDate(today.getDate() + 7);\nconst rows = $input.first().json;\nconst out = [];\nfor (const row of rows) {\n  const end = new Date(row.current_period_end);\n  const diff = Math.ceil((end.getTime() - today.getTime()) / 86400000);\n  if (diff === 1 || diff === 7) {\n    out.push({\n      json: {\n        template: 'expiring_soon',\n        to: row.poupeja_users?.email,\n        data: {\n          name: row.poupeja_users?.name || 'cliente',\n          days: diff,\n          app_url: $env.APP_URL || 'https://app.contabiliza.com'\n        }\n      }\n    });\n  }\n}\nreturn out;"
+      },
+      "id": "split_days",
+      "name": "Split 7d and 1d",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL + '/functions/v1/send-email'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}"
+      },
+      "id": "send_emails",
+      "name": "Send Expiring Emails",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.DISCORD_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"content\":\"✅ Avisos de expiração enviados: {{$items('Send Expiring Emails').length}}\"}"
+      },
+      "id": "discord_alert",
+      "name": "Discord Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1220, 260]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Get Expiring Subscriptions", "type": "main", "index": 0 }]] },
+    "Get Expiring Subscriptions": { "main": [[{ "node": "Split 7d and 1d", "type": "main", "index": 0 }]] },
+    "Split 7d and 1d": { "main": [[{ "node": "Send Expiring Emails", "type": "main", "index": 0 }]] },
+    "Send Expiring Emails": { "main": [[{ "node": "Discord Alert", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

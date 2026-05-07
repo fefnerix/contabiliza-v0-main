@@ -15,6 +15,7 @@ import { handleSubscriptionUpdated } from "./handlers/subscription-updated.ts";
 import { handleSubscriptionDeleted } from "./handlers/subscription-deleted.ts";
 import { handleInvoicePaymentSucceeded } from "./handlers/invoice-payment-succeeded.ts";
 import { handleInvoicePaymentFailed } from "./handlers/invoice-payment-failed.ts";
+import { alertDiscord } from "../_shared/alert.ts";
 
 // Stripe instance will be created after getting the secret key from settings
 
@@ -40,6 +41,7 @@ const handleRequest = async (req: Request) => {
   // For Stripe webhooks, main verification is via signature, not auth header
   if (!signature) {
     console.error("Missing Stripe signature");
+    await alertDiscord("error", "Stripe Webhook Falhou", "Assinatura Stripe ausente", { event_type: "unknown" });
     return new Response("Missing Stripe signature", { status: 400 });
   }
 
@@ -60,6 +62,7 @@ const handleRequest = async (req: Request) => {
 
   if (!stripeSecretData?.value || !webhookSecretData?.value) {
     console.error("Missing Stripe configuration");
+    await alertDiscord("critical", "Stripe Webhook Falhou", "Configuração Stripe ausente", { event_type: "unknown" });
     return new Response("Stripe configuration not found", { status: 500 });
   }
 
@@ -91,6 +94,7 @@ const handleRequest = async (req: Request) => {
     console.log("Valid Stripe signature verified, proceeding with processing");
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
+    await alertDiscord("error", "Stripe Webhook Falhou", err.message, { event_type: "signature_verification" });
     return new Response(`Webhook Error: ${err.message}`, {
       status: 400
     });
@@ -125,6 +129,7 @@ const handleRequest = async (req: Request) => {
     return createSuccessResponse(event);
   } catch (error) {
     console.error("Error processing webhook:", error.message, error.stack);
+    await alertDiscord("error", "Stripe Webhook Falhou", error.message, { event_type: event?.type || "unknown" });
     return createErrorResponse(error);
   }
 };

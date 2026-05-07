@@ -1,0 +1,100 @@
+{
+  "name": "Cron Weekly Admin Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL + '/rest/v1/rpc/get_admin_weekly_metrics'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
+      },
+      "id": "fetch_metrics",
+      "name": "Fetch Weekly Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $input.first().json?.[0] || {};\nreturn [{ json: {\n  html: `<h2>Relatório Semanal Contabiliza</h2>\n  <p><b>Novos cadastros:</b> ${m.new_users ?? 0}</p>\n  <p><b>Acessos ativados:</b> ${m.activated ?? 0}</p>\n  <p><b>Expirados:</b> ${m.expired ?? 0}</p>\n  <p><b>MRR atual:</b> R$ ${(m.mrr ?? 0).toFixed(2)}</p>`,\n  summary: `📊 Semana: cadastros=${m.new_users ?? 0}, ativados=${m.activated ?? 0}, expirados=${m.expired ?? 0}, MRR=R$ ${(m.mrr ?? 0).toFixed(2)}`\n}}];"
+      },
+      "id": "build_report",
+      "name": "Build HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [730, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL + '/functions/v1/send-email'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"template\":\"welcome\",\"to\":\"admin@contabiliza.com\",\"data\":{\"name\":\"Admin\",\"app_name\":\"Contabiliza\",\"custom_html\":\"{{$json.html}}\"}}"
+      },
+      "id": "send_admin_email",
+      "name": "Send Admin Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.DISCORD_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"content\":\"{{$json.summary}}\"}"
+      },
+      "id": "discord_summary",
+      "name": "Discord Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 340]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Fetch Weekly Metrics", "type": "main", "index": 0 }]] },
+    "Fetch Weekly Metrics": { "main": [[{ "node": "Build HTML Report", "type": "main", "index": 0 }]] },
+    "Build HTML Report": {
+      "main": [[
+        { "node": "Send Admin Email", "type": "main", "index": 0 },
+        { "node": "Discord Summary", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

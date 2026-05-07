@@ -1,8 +1,25 @@
 
 import { createRoot } from 'react-dom/client'
+import * as Sentry from "@sentry/react";
 import App from './App.tsx'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN || "",
+  environment: import.meta.env.MODE,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
+  ],
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.05,
+  replaysOnErrorSampleRate: 1.0,
+  enabled: !!import.meta.env.VITE_SENTRY_DSN,
+  beforeSend(event) {
+    return event;
+  },
+});
 
 // Register service worker
 const updateSW = registerSW({

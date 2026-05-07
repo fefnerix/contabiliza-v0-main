@@ -1,0 +1,2 @@
+[functions.get-health-scores]
+verify_jwt = true

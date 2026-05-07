@@ -4,7 +4,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useUserRole } from '@/hooks/useUserRole';
-import { LayoutDashboard, Receipt, Settings, Crown, Plus, Target, Calendar, Shield, User, FileText, Tag } from 'lucide-react';
+import { LayoutDashboard, Receipt, Settings, Crown, Plus, Target, Calendar, Shield, User, FileText, Tag, Users2, Webhook } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +23,7 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   
   // Verificar se estamos na página de administração
-  const isAdminPage = location.pathname === '/admin';
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   const quickActionItems = [
     {
@@ -83,8 +83,18 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
     const adminMenuItems = [
       {
         icon: Shield,
-        label: 'Admin',
+        label: 'Dashboard',
         href: '/admin'
+      },
+      {
+        icon: Users2,
+        label: 'Clientes',
+        href: '/admin/customers'
+      },
+      {
+        icon: Webhook,
+        label: 'Checkouts',
+        href: '/admin/checkouts'
       },
       {
         icon: User,
