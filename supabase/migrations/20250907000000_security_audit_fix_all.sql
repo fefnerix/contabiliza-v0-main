@@ -1,0 +1,2 @@
+-- Applied remotely via MCP on 2026-05-07.
+-- This file is added to keep repository migration history in sync.

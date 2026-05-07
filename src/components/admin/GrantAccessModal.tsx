@@ -113,9 +113,10 @@ export const GrantAccessModal: React.FC<GrantAccessModalProps> = ({ open, onOpen
           )}
 
           <div className="space-y-2">
-            <Label>Observação (opcional)</Label>
+            <Label>Observação (opcional, máx. 200)</Label>
             <Textarea
               value={notes}
+              maxLength={200}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Motivo da ativação manual"
             />

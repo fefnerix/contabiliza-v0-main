@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -32,6 +32,14 @@ import ThankYouPage from "./pages/ThankYouPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminCheckoutsPage from "./pages/admin/AdminCheckoutsPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
+import AdminPlansPage from "./pages/admin/AdminPlansPage";
+import AdminCommunicationsPage from "./pages/admin/AdminCommunicationsPage";
+import AdminContentPage from "./pages/admin/AdminContentPage";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminLogsPage from "./pages/admin/AdminLogsPage";
+import AdminAuditPage from "./pages/admin/AdminAuditPage";
+import AdminLayout from "./components/admin/AdminLayout";
 import AchievementsPage from "./pages/AchievementsPage";
 import NotFound from "./pages/NotFound";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -71,30 +79,26 @@ function App() {
                         <Route path="/payment-success" element={<PaymentSuccessPage />} />
                         <Route path="/thank-you" element={<ThankYouPage />} />
                         <Route path="/achievements" element={<AchievementsPage />} />
-                        <Route 
-                          path="/admin" 
-                          element={
-                            <AdminRoute>
-                              <AdminDashboardPage />
-                            </AdminRoute>
-                          } 
-                        />
                         <Route
-                          path="/admin/customers"
+                          path="/admin"
                           element={
                             <AdminRoute>
-                              <AdminCustomersPage />
+                              <AdminLayout />
                             </AdminRoute>
                           }
-                        />
-                        <Route
-                          path="/admin/checkouts"
-                          element={
-                            <AdminRoute>
-                              <AdminCheckoutsPage />
-                            </AdminRoute>
-                          }
-                        />
+                        >
+                          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                          <Route path="dashboard" element={<AdminDashboardPage />} />
+                          <Route path="customers" element={<AdminCustomersPage />} />
+                          <Route path="analytics" element={<AdminAnalyticsPage />} />
+                          <Route path="plans" element={<AdminPlansPage />} />
+                          <Route path="checkouts" element={<AdminCheckoutsPage />} />
+                          <Route path="communications" element={<AdminCommunicationsPage />} />
+                          <Route path="content" element={<AdminContentPage />} />
+                          <Route path="settings" element={<AdminSettingsPage />} />
+                          <Route path="logs" element={<AdminLogsPage />} />
+                          <Route path="audit" element={<AdminAuditPage />} />
+                        </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>

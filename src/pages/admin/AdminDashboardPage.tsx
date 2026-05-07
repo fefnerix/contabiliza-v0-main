@@ -1,130 +1,114 @@
-import React from "react";
+import { Link } from "react-router-dom";
+import { Activity, CalendarClock, RefreshCw, TriangleAlert, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import Sidebar from "@/components/layout/Sidebar";
-import MobileHeader from "@/components/layout/MobileHeader";
-import MobileNavBar from "@/components/layout/MobileNavBar";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useAppContext } from "@/contexts/AppContext";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 
-const formatMoney = (value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-const formatDelta = (value: number) => (value >= 0 ? `↑ ${value}` : `↓ ${Math.abs(value)}`);
-
-const statusColor = {
-  online: "bg-green-100 text-green-700",
-  offline: "bg-red-100 text-red-700",
-  degraded: "bg-yellow-100 text-yellow-700",
+const money = (n: number) => `R$ ${n.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+const delta = (n: number) => (n >= 0 ? `↑ ${n}` : `↓ ${Math.abs(n)}`);
+const relative = (iso: string) => {
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "há instantes";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `há ${h}h`;
+  return `há ${Math.floor(h / 24)}d`;
 };
 
-const AdminDashboardPage: React.FC = () => {
-  const { hideValues, toggleHideValues } = useAppContext();
-  const isMobile = useIsMobile();
-  const { loading, kpis, mrr, services, recentActivity, checkoutToggles, refresh, updateCheckoutToggle } = useAdminDashboard();
+const serviceClass: Record<string, string> = {
+  online: "bg-emerald-500",
+  warning: "bg-amber-500",
+  offline: "bg-red-500",
+  not_configured: "bg-zinc-500",
+};
 
-  const content = (
-    <div className="w-full max-w-7xl mx-auto space-y-5">
+const AdminDashboardPage = () => {
+  const { dayStats, revenue, services, healthSummary, activity, checkoutToggles, loading, refresh, toggleCheckout } = useAdminDashboard();
+  const totalHealth = healthSummary.healthy + healthSummary.atRisk + healthSummary.critical;
+
+  return (
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard Operacional</h1>
-          <p className="text-sm text-muted-foreground">Visão em tempo real do sistema</p>
+          <h2 className="text-2xl font-semibold text-zinc-100">Dashboard Operacional</h2>
+          <p className="text-zinc-400 text-sm">Visão de operação, receita e saúde da plataforma.</p>
         </div>
         <Button variant="outline" onClick={refresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
           Verificar agora
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Novos cadastros hoje</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{kpis.newUsersToday}</p><p className="text-xs text-muted-foreground">{formatDelta(kpis.deltas.newUsersToday)} vs ontem</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Acessos ativados hoje</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{kpis.activatedToday}</p><p className="text-xs text-muted-foreground">{formatDelta(kpis.deltas.activatedToday)} vs ontem</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Erros webhook hoje</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{kpis.webhookErrorsToday}</p><p className="text-xs text-muted-foreground">{formatDelta(kpis.deltas.webhookErrorsToday)} vs ontem</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Expirando em 7 dias</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{kpis.expiringIn7Days}</p><p className="text-xs text-muted-foreground">{formatDelta(kpis.deltas.expiringIn7Days)} vs ontem</p></CardContent>
-        </Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" />Novos cadastros</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.newUsers}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.newUsers)} vs ontem</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" />Ativações hoje</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.activatedToday}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.activatedToday)} vs ontem</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><TriangleAlert className="h-4 w-4" />Erros webhook</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.webhookErrors}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.webhookErrors)} vs ontem</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><CalendarClock className="h-4 w-4" />Expirando em 7 dias</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.expiringSoon}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.expiringSoon)} vs ontem</p></CardContent></Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader><CardTitle className="text-sm">MRR atual</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatMoney(mrr.mrr)}</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm">ARR estimado</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatMoney(mrr.arr)}</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm">Assinantes ativos</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{mrr.activeSubscribers}</p></CardContent></Card>
+        <Card className="md:col-span-1"><CardHeader><CardTitle>MRR</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{money(revenue.mrr)}</p></CardContent></Card>
+        <Card className="md:col-span-1"><CardHeader><CardTitle>ARR</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{money(revenue.arr)}</p></CardContent></Card>
+        <Card className="md:col-span-1"><CardHeader><CardTitle>Assinantes</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{revenue.activeSubscribers}</p><div className="flex gap-2 mt-2"><Badge variant="secondary">mensal {revenue.byPlan.monthly}</Badge><Badge variant="secondary">anual {revenue.byPlan.annual}</Badge><Badge variant="secondary">lifetime {revenue.byPlan.lifetime}</Badge></div></CardContent></Card>
       </div>
 
       <Card>
         <CardHeader><CardTitle>Status dos serviços</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <div key={service.name} className="rounded-lg border p-3">
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{service.name}</p>
-                <Badge className={statusColor[service.status]}>{service.status}</Badge>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((s) => (
+            <div key={s.name} className="rounded-lg border border-zinc-800 p-3">
+              <div className="flex items-center gap-2">
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${serviceClass[s.status]}`} />
+                <span className="font-medium">{s.name}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Verificado em {new Date(service.checkedAt).toLocaleTimeString("pt-BR")}
-              </p>
-              {service.details && <p className="text-xs mt-1">{service.details}</p>}
+              <p className="text-xs text-zinc-400 mt-1">{relative(s.checkedAt)}</p>
             </div>
           ))}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Checkouts ativos</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">Stripe <Switch checked={checkoutToggles.stripe_enabled} onCheckedChange={(v) => updateCheckoutToggle("stripe_enabled", v)} /></div>
-          <div className="flex items-center gap-2">Hotmart <Switch checked={checkoutToggles.hotmart_enabled} onCheckedChange={(v) => updateCheckoutToggle("hotmart_enabled", v)} /></div>
-          <div className="flex items-center gap-2">Genérico <Switch checked={checkoutToggles.generic_enabled} onCheckedChange={(v) => updateCheckoutToggle("generic_enabled", v)} /></div>
-          <div className="flex items-center gap-2">Manual <Switch checked disabled /></div>
+        <CardHeader><CardTitle>Checkouts</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Badge className="gap-2 bg-zinc-800 text-zinc-200">Stripe <Switch checked={checkoutToggles.stripe} onCheckedChange={(v) => toggleCheckout("stripe", v)} /></Badge>
+          <Badge className="gap-2 bg-zinc-800 text-zinc-200">Hotmart <Switch checked={checkoutToggles.hotmart} onCheckedChange={(v) => toggleCheckout("hotmart", v)} /></Badge>
+          <Badge className="gap-2 bg-emerald-500/20 text-emerald-300">Manual 🔒 <Switch checked disabled /></Badge>
+          <Badge className="gap-2 bg-zinc-800 text-zinc-200">Genérico <Switch checked={checkoutToggles.generic} onCheckedChange={(v) => toggleCheckout("generic", v)} /></Badge>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Atividade recente</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {loading && <p className="text-sm text-muted-foreground">Carregando...</p>}
-          {!loading && recentActivity.length === 0 && <p className="text-sm text-muted-foreground">Sem eventos recentes.</p>}
-          {recentActivity.map((event, idx) => (
-            <div key={`${event.type}-${idx}`} className="rounded border p-2 text-sm">
-              {event.type === "access" && (
-                <span>✅ Acesso {event.data.action} ({event.data.plan_type || "n/a"}) via {event.data.source || "manual"}</span>
-              )}
-              {event.type === "webhook" && (
-                <span>{event.data.error ? "❌" : "🟢"} Webhook {event.data.provider}: {event.data.event_type}</span>
-              )}
-              {event.type === "user" && <span>👤 {event.data.email} se cadastrou</span>}
-              <div className="text-xs text-muted-foreground mt-1">{new Date(event.created_at).toLocaleString("pt-BR")}</div>
+        <CardHeader><CardTitle>Health score</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="rounded border border-emerald-700/40 p-3"><p className="text-xs text-zinc-400">🟢 Saudáveis</p><p className="text-2xl font-bold">{healthSummary.healthy}</p></div>
+            <div className="rounded border border-amber-700/40 p-3"><p className="text-xs text-zinc-400">🟡 Em risco</p><p className="text-2xl font-bold">{healthSummary.atRisk}</p></div>
+            <div className="rounded border border-red-700/40 p-3"><p className="text-xs text-zinc-400">🔴 Críticos</p><p className="text-2xl font-bold">{healthSummary.critical}</p></div>
+          </div>
+          <div className="h-3 rounded overflow-hidden flex bg-zinc-800">
+            <div style={{ width: `${totalHealth ? (healthSummary.healthy / totalHealth) * 100 : 0}%` }} className="bg-emerald-500" />
+            <div style={{ width: `${totalHealth ? (healthSummary.atRisk / totalHealth) * 100 : 0}%` }} className="bg-amber-500" />
+            <div style={{ width: `${totalHealth ? (healthSummary.critical / totalHealth) * 100 : 0}%` }} className="bg-red-500" />
+          </div>
+          <Link to="/admin/customers?filter=critical" className="text-sm text-emerald-400 mt-3 inline-block">Ver clientes críticos</Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Feed de atividade</CardTitle></CardHeader>
+        <CardContent className="max-h-80 overflow-auto space-y-2">
+          {loading.activity ? <p className="text-sm text-zinc-400">Carregando...</p> : null}
+          {activity.map((item) => (
+            <div key={item.id} className="rounded border border-zinc-800 p-2">
+              <p className="text-sm">{item.message}</p>
+              <p className="text-xs text-zinc-500">{relative(item.timestamp)}</p>
             </div>
           ))}
         </CardContent>
       </Card>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-screen">
-        <MobileHeader hideValues={hideValues} toggleHideValues={toggleHideValues} />
-        <main className="flex-1 overflow-auto p-4 pb-20">{content}</main>
-        <MobileNavBar />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-auto p-6">{content}</main>
     </div>
   );
 };

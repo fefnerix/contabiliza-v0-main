@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { useBrandingConfig } from '@/hooks/useBrandingConfig';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { t } = usePreferences();
   const { user, isLoading: authLoading } = useAppContext();
@@ -29,7 +30,7 @@ const LoginPage = () => {
       // Verificar se o usuário é admin
       checkUserRoleAndRedirect(user.id);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, location.search]);
 
   const checkUserRoleAndRedirect = async (userId: string) => {
     try {
@@ -42,9 +43,15 @@ const LoginPage = () => {
         return;
       }
 
+      const redirectTo = new URLSearchParams(location.search).get('redirect');
+
       if (response?.success && response?.isAdmin) {
-        console.log('Redirecionando admin para /admin');
-        navigate('/admin', { replace: true });
+        console.log('Redirecionando admin');
+        if (redirectTo) {
+          navigate(redirectTo === '/admin' ? '/admin/dashboard' : redirectTo, { replace: true });
+        } else {
+          navigate('/admin', { replace: true });
+        }
       } else {
         console.log('Redirecionando usuário normal para /dashboard');
         navigate('/dashboard', { replace: true });
@@ -78,8 +85,12 @@ const LoginPage = () => {
           description: t('auth.redirecting') || 'Redirigiendo...',
         });
         
-        // Verificar se é admin e redirecionar adequadamente
-        await checkUserRoleAndRedirect(authData.user.id);
+        const redirectTo = new URLSearchParams(location.search).get('redirect');
+        if (redirectTo) {
+          navigate(redirectTo === '/admin' ? '/admin/dashboard' : redirectTo, { replace: true });
+        } else {
+          await checkUserRoleAndRedirect(authData.user.id);
+        }
       } else {
         throw new Error('Login successful but no session established');
       }
