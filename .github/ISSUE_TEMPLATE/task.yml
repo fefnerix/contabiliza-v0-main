@@ -1,0 +1,46 @@
+name: Task tecnica
+description: Defina uma tarefa de manutencao/refactor/documentacao.
+title: "[TASK] "
+labels: ["type:task", "status:triage"]
+body:
+  - type: input
+    id: goal
+    attributes:
+      label: Objetivo da tarefa
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Por que essa tarefa e necessaria agora?
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Entregaveis
+      placeholder: |
+        - [ ] Item 1
+        - [ ] Item 2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - P1
+        - P2
+        - P3
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Como validar
+      placeholder: "Comandos, cenarios manuais e criterios de conclusao."

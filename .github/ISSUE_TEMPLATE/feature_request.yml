@@ -1,0 +1,57 @@
+name: Feature request
+description: Proponha uma melhoria de produto/engenharia.
+title: "[FEATURE] "
+labels: ["type:feature", "status:triage"]
+body:
+  - type: input
+    id: problem
+    attributes:
+      label: Problema ou oportunidade
+      placeholder: "Qual dor essa feature resolve?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta de solucao
+      placeholder: "Descreva a abordagem sugerida."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Escopo inicial
+      placeholder: |
+        Inclui:
+        Nao inclui:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade sugerida
+      options:
+        - P1 - Alto impacto
+        - P2 - Medio impacto
+        - P3 - Baixo impacto
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceite
+      placeholder: |
+        - [ ] Cenario A
+        - [ ] Cenario B
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencias/impactos
+      description: APIs, migracoes, edge functions, docs, etc.

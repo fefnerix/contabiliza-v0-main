@@ -1,0 +1,2 @@
+[functions.validate-profile-update]
+verify_jwt = false

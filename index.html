@@ -1,0 +1,105 @@
+<!-- 
+  Copyright 2025 Lovable. All rights reserved.
+  This file is part of Contabiliza.
+  Contabiliza is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+--> 
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Contabiliza</title>
+    <meta name="description" content="Administra tus finanzas con Contabiliza" />
+    <meta name="author" content="Lovable" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="/lovable-uploads/feb4b0d7-9e89-45bc-bae1-72b1af54eacd.png" type="image/png" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Contabiliza" />
+    <link rel="apple-touch-icon" href="/lovable-uploads/feb4b0d7-9e89-45bc-bae1-72b1af54eacd.png" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Open Graph / WhatsApp Meta Tags -->
+    <meta property="og:title" content="Contabiliza" />
+    <meta property="og:description" content="Administra tus finanzas con Contabiliza" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/lovable-uploads/feb4b0d7-9e89-45bc-bae1-72b1af54eacd.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Contabiliza" />
+    <meta name="twitter:description" content="Administra tus finanzas con Contabiliza" />
+    <meta name="twitter:image" content="/lovable-uploads/feb4b0d7-9e89-45bc-bae1-72b1af54eacd.png" />
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TTBM5KGZ');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Vite -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    
+    <script>
+      // Pre-carregar branding cache se existir
+      (function() {
+        const cached = localStorage.getItem('app_branding_cache');
+        if (cached) {
+          try {
+            const branding = JSON.parse(cached);
+            const isExpired = Date.now() - branding.timestamp > 300000; // 5 min
+            
+            if (!isExpired && branding.logoUrl) {
+              // Pre-carregar imagem
+              const link = document.createElement('link');
+              link.rel = 'preload';
+              link.as = 'image';
+              link.href = branding.logoUrl;
+              document.head.appendChild(link);
+              
+              // Atualizar título
+              if (branding.companyName) {
+                document.title = branding.companyName + ' - Controle Financeiro';
+              }
+              
+              // Atualizar favicon
+              if (branding.faviconUrl && branding.faviconUrl !== '/favicon.ico') {
+                const favicon = document.querySelector("link[rel*='icon']");
+                if (favicon) {
+                  favicon.href = branding.faviconUrl;
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTBM5KGZ"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    
+    <div id="root"></div>
+    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

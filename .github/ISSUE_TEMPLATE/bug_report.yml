@@ -1,0 +1,82 @@
+name: Bug report
+description: Reporte um erro com contexto tecnico.
+title: "[BUG] "
+labels: ["type:bug", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar. Preencha os campos para facilitar reproducao e correcao.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Resumo do problema
+      placeholder: "Ex.: erro ao salvar transacao recorrente"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options:
+        - P0 - Critico (producao/seguranca/dados)
+        - P1 - Alto
+        - P2 - Medio
+        - P3 - Baixo
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Ir para...
+        2. Clicar em...
+        3. Ver erro...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencias (logs, screenshots, stacktrace)
+      description: Cole trechos relevantes sem expor dados sensiveis.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      placeholder: |
+        - OS:
+        - Navegador:
+        - Branch/commit:
+        - Variaveis de ambiente relevantes:
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmacoes
+      options:
+        - label: Busquei por issue similar aberta
+          required: true
+        - label: Removi informacoes sensiveis do reporte
+          required: true
