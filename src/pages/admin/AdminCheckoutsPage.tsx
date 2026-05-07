@@ -33,7 +33,7 @@ const AdminCheckoutsPage = () => {
   const { providers, settings, toggleProvider, saveConfig, generateToken, webhookEvents, eventsLoading, eventsFilter, setEventsFilter, reprocessEvent, ignoreEvent } = useAdminCheckouts();
   const { grantAccess } = useAdminCustomers();
   const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
-  const [drawerEvent, setDrawerEvent] = useState<any>(null);
+  const [drawerEvent, setDrawerEvent] = useState<unknown>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [forms, setForms] = useState({
     stripe_secret_key: settings["stripe.stripe_secret_key"] || "",
@@ -67,7 +67,6 @@ const AdminCheckoutsPage = () => {
 
   useEffect(() => {
     syncForms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
   const providerBadge = (provider: ProviderKey) => {
@@ -145,7 +144,7 @@ const AdminCheckoutsPage = () => {
                   ].map((field) => (
                     <div key={field}>
                       <Label>{field}</Label>
-                      <Input value={(forms as any)[field]} onChange={(e) => setForms((f) => ({ ...f, [field]: e.target.value }))} />
+                    <Input value={forms[field as keyof typeof forms]} onChange={(e) => setForms((f) => ({ ...f, [field]: e.target.value }))} />
                     </div>
                   ))}
                   <div className="rounded border p-2 text-xs">
@@ -212,7 +211,7 @@ const AdminCheckoutsPage = () => {
         <CardHeader><CardTitle>Eventos recentes de webhook</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Select value={eventsFilter.provider} onValueChange={(v: any) => setEventsFilter((f) => ({ ...f, provider: v }))}>
+            <Select value={eventsFilter.provider} onValueChange={(v) => setEventsFilter((f) => ({ ...f, provider: v }))}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
@@ -221,7 +220,7 @@ const AdminCheckoutsPage = () => {
                 <SelectItem value="generic">Genérico</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={eventsFilter.error} onValueChange={(v: any) => setEventsFilter((f) => ({ ...f, error: v }))}>
+            <Select value={eventsFilter.error} onValueChange={(v) => setEventsFilter((f) => ({ ...f, error: v }))}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>

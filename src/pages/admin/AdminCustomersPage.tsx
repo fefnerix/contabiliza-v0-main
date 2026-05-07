@@ -47,7 +47,6 @@ const AdminCustomersPage = () => {
     setFilters((prev) => ({ ...prev, search: urlSearch, health }));
     setSearchInput(urlSearch);
     fetchCustomers({ search: urlSearch, health }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

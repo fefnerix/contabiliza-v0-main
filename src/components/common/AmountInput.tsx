@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { UseFormReturn } from 'react-hook-form';
@@ -10,7 +10,7 @@ interface AmountInputProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  form?: UseFormReturn<any>;
+  form?: UseFormReturn<unknown>;
   maxValue?: number;
 }
 
@@ -102,13 +102,6 @@ const AmountInput: React.FC<AmountInputProps> = ({
         control={form.control}
         name="amount"
         render={({ field }) => {
-          // Sync local state with field value when form loads
-          useEffect(() => {
-            if (field.value && field.value !== stringToNumber(inputValue)) {
-              setInputValue(formatNumberToString(field.value));
-            }
-          }, [field.value]);
-
           return (
             <FormItem>
               <FormLabel>Valor</FormLabel>
