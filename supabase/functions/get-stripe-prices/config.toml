@@ -1,2 +1,3 @@
+[functions.get-stripe-prices]
 verify_jwt = false
 

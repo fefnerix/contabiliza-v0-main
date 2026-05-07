@@ -1,2 +1,3 @@
+[functions.get-public-settings]
 verify_jwt = false
 

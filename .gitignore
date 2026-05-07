@@ -39,3 +39,5 @@ lerna-debug.log*
 
 # Supabase CLI temp
 supabase/.temp/
+
+.vercel

@@ -1,2 +1,3 @@
+[functions.check-subscription-status]
 verify_jwt = false
 
