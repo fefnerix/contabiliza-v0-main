@@ -2,10 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-export const SUPABASE_URL = "https://qyexcjupvayzyxhzcsft.supabase.co";
-export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXhjanVwdmF5enl4aHpjc2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NzA2ODEsImV4cCI6MjA2OTE0NjY4MX0.pzrjBRbDbf68p6HJWpEy1Y3NY5unY5AZLVr3uiEVDL0";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-// Check if Supabase is properly configured
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.warn('Supabase env vars not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+}
+
 export const isSupabaseConfigured = (): boolean => {
   return !!(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 };

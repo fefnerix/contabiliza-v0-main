@@ -39,12 +39,11 @@ export const StaticHtmlGenerator = () => {
     try {
       console.log('[STATIC-HTML] Chamando função generate-html...')
 
-      // Importando a constante SUPABASE_URL
-      const { SUPABASE_URL } = await import('@/integrations/supabase/client')
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
       
       // Chamar a Edge Function (sem autenticação)
       const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/generate-html`,
+        `${SUPABASE_URL ?? ''}/functions/v1/generate-html`,
         {
           method: 'GET',
           headers: {

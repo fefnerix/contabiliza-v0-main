@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Copy, Eye, EyeOff, ArrowRight, Loader2, AlertTriangle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useContactConfig } from '@/hooks/useContactConfig';
 import { useAutoLogin } from '@/hooks/useAutoLogin';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useMetaPixel } from '@/hooks/useMetaPixel';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();

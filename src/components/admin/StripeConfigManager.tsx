@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Save, Loader2, CreditCard, Key, Webhook } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
 
 const StripeConfigManager: React.FC = () => {
@@ -268,7 +270,7 @@ const StripeConfigManager: React.FC = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">URL del Webhook en Stripe:</h4>
             <code className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm block text-gray-900 dark:text-gray-100 border">
-              {SUPABASE_URL}/functions/v1/stripe-webhook
+              {SUPABASE_URL ?? ''}/functions/v1/stripe-webhook
             </code>
             <p className="text-blue-800 mt-2 text-sm">
               Configura esta URL en el dashboard de Stripe para recibir eventos de pago.

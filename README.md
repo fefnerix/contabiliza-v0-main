@@ -54,6 +54,8 @@ Sistema completo de gestão financeira pessoal com foco em facilidade de uso, au
 
 ### 1. Preparar Supabase
 
+**Nome de referência do projeto Supabase:** `supabase-contabiliza`
+
 1. Acesse [supabase.com](https://supabase.com) e crie uma conta
 2. Crie um novo projeto
 3. Anote as seguintes informações:
