@@ -1,0 +1,3 @@
+-- Align local migration history with remote Supabase project.
+-- This migration intentionally performs no schema changes.
+-- Remote version 20260508225841 already exists and was applied outside this repository.
