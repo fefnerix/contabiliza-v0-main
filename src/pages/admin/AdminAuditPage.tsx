@@ -1,101 +1,20 @@
-import { useMemo, useState } from "react";
-import { Badge, Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminAuditTab } from "@/components/admin/AdminAuditTab";
 import { useAdminLogs } from "@/hooks/useAdminLogs";
 
 const AdminAuditPage = () => {
   const { auditLogs, auditFilters, setAuditFilters, exportAuditCSV } = useAdminLogs();
-  const [selectedAudit, setSelectedAudit] = useState<any>(null);
-
-  const admins = useMemo(() => Array.from(new Set(auditLogs.map((row: any) => row.admin_id).filter(Boolean))), [auditLogs]);
-  const actions = useMemo(() => Array.from(new Set(auditLogs.map((row: any) => row.action).filter(Boolean))), [auditLogs]);
 
   return (
     <div className="space-y-5">
       <h2 className="text-2xl font-semibold">Auditoria Admin</h2>
-      <Card>
-        <CardHeader><CardTitle>Filtros</CardTitle></CardHeader>
-        <CardContent className="grid md:grid-cols-5 gap-2">
-          <Select value={auditFilters.adminId} onValueChange={(value) => setAuditFilters((f: any) => ({ ...f, adminId: value, page: 0 }))}>
-            <SelectTrigger><SelectValue placeholder="Admin" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos admins</SelectItem>
-              {admins.map((id) => <SelectItem key={id} value={id}>{id}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={auditFilters.action} onValueChange={(value) => setAuditFilters((f: any) => ({ ...f, action: value, page: 0 }))}>
-            <SelectTrigger><SelectValue placeholder="Ação" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas ações</SelectItem>
-              {actions.map((action) => <SelectItem key={action} value={action}>{action}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Input placeholder="Alvo (tipo/ID)" value={auditFilters.target} onChange={(e) => setAuditFilters((f: any) => ({ ...f, target: e.target.value, page: 0 }))} />
-          <div>
-            <Label>Início</Label>
-            <Input type="date" value={auditFilters.startDate} onChange={(e) => setAuditFilters((f: any) => ({ ...f, startDate: e.target.value, page: 0 }))} />
-          </div>
-          <div>
-            <Label>Fim</Label>
-            <Input type="date" value={auditFilters.endDate} onChange={(e) => setAuditFilters((f: any) => ({ ...f, endDate: e.target.value, page: 0 }))} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-between">
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setAuditFilters((f: any) => ({ ...f, page: Math.max(0, f.page - 1) }))}>Página anterior</Button>
-          <Button variant="outline" onClick={() => setAuditFilters((f: any) => ({ ...f, page: f.page + 1 }))}>Próxima página</Button>
-        </div>
-        <Button onClick={exportAuditCSV}>Exportar CSV</Button>
-      </div>
-
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Admin</TableHead>
-                <TableHead>Ação</TableHead>
-                <TableHead>Alvo</TableHead>
-                <TableHead>Detalhes</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead>Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {auditLogs.map((row: any) => (
-                <TableRow key={row.id} className="cursor-pointer" onClick={() => setSelectedAudit(row)}>
-                  <TableCell>{row.admin?.name ?? row.admin_id ?? "—"}</TableCell>
-                  <TableCell>{row.action}</TableCell>
-                  <TableCell>{row.target_type || "—"}</TableCell>
-                  <TableCell>{JSON.stringify(row.details ?? {}).slice(0, 80)}</TableCell>
-                  <TableCell>{row.ip_address || "—"}</TableCell>
-                  <TableCell>{new Date(row.created_at).toLocaleString("pt-BR")}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Sheet open={!!selectedAudit} onOpenChange={(open) => !open && setSelectedAudit(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader><SheetTitle>Detalhes da auditoria</SheetTitle></SheetHeader>
-          <pre className="mt-4 text-xs whitespace-pre-wrap rounded border p-3">
-            {selectedAudit ? JSON.stringify(selectedAudit, null, 2) : ""}
-          </pre>
-        </SheetContent>
-      </Sheet>
+      <AdminAuditTab
+        auditLogs={auditLogs}
+        auditFilters={auditFilters}
+        setAuditFilters={setAuditFilters}
+        exportAuditCSV={exportAuditCSV}
+      />
     </div>
   );
 };
 
 export default AdminAuditPage;
-

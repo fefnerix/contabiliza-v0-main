@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
+  Activity,
   BarChart3,
   CreditCard,
   FileText,
   LayoutDashboard,
   Mail,
   Menu,
-  ScrollText,
   Settings2,
   Shield,
   Users2,
@@ -21,6 +21,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAppContext } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
+import { InfraStatusProvider, useInfraStatusContext } from "@/contexts/InfraStatusContext";
 
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -31,16 +32,17 @@ const navItems = [
   { label: "Emails", href: "/admin/communications", icon: Mail },
   { label: "Conteúdo", href: "/admin/content", icon: FileText },
   { label: "Configurações", href: "/admin/settings", icon: Settings2 },
-  { label: "Logs", href: "/admin/logs", icon: ScrollText },
+  { label: "Infraestrutura", href: "/admin/logs", icon: Activity },
   { label: "Auditoria", href: "/admin/audit", icon: Shield },
 ];
 
-export const AdminLayout = () => {
+const AdminLayoutInner = () => {
   const location = useLocation();
   const { user, logout } = useAppContext();
   const [openMobile, setOpenMobile] = useState(false);
   const [criticalCount, setCriticalCount] = useState(0);
   const [companyName, setCompanyName] = useState("Contabiliza");
+  const { summary } = useInfraStatusContext();
 
   useEffect(() => {
     const loadCritical = async () => {
@@ -94,6 +96,11 @@ export const AdminLayout = () => {
             <item.icon className="h-4 w-4" />
             <span>{item.label}</span>
             {item.label === "Clientes" && criticalCount > 0 ? <Badge variant="destructive">{criticalCount}</Badge> : null}
+            {item.href === "/admin/logs" && summary.error > 0 ? (
+              <Badge variant="destructive" className="ml-auto">
+                {summary.error}
+              </Badge>
+            ) : null}
           </Link>
         );
       })}
@@ -152,6 +159,12 @@ export const AdminLayout = () => {
     </div>
   );
 };
+
+export const AdminLayout = () => (
+  <InfraStatusProvider>
+    <AdminLayoutInner />
+  </InfraStatusProvider>
+);
 
 export default AdminLayout;
 

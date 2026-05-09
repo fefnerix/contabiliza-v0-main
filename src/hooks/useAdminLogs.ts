@@ -19,6 +19,7 @@ export const useAdminLogs = () => {
   const [webhookEvents, setWebhookEvents] = useState<any[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsFilter, setEventsFilter] = useState({ provider: "all", status: "all" });
+  const [webhookTodayStats, setWebhookTodayStats] = useState({ total: 0, processedOk: 0, withError: 0 });
 
   const [incidents, setIncidents] = useState<any[]>([]);
   const [incidentsLoading, setIncidentsLoading] = useState(false);
@@ -81,17 +82,47 @@ export const useAdminLogs = () => {
     }
   }, [eventsFilter.provider, eventsFilter.status]);
 
+  const fetchWebhookTodayStats = useCallback(async () => {
+    try {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const { data, error } = await (supabase as any)
+        .from("poupeja_webhook_events")
+        .select("id, error, processed")
+        .gte("created_at", start.toISOString());
+      if (error) throw error;
+      const rows = data ?? [];
+      const withError = rows.filter((r: any) => r.error).length;
+      const processedOk = rows.filter((r: any) => !r.error).length;
+      setWebhookTodayStats({ total: rows.length, processedOk, withError });
+    } catch {
+      setWebhookTodayStats({ total: 0, processedOk: 0, withError: 0 });
+    }
+  }, []);
+
   const reprocessEvent = useCallback(async (id: string) => {
     const { error } = await (supabase as any).from("poupeja_webhook_events").update({ processed: false, error: null }).eq("id", id);
     if (error) throw error;
     await fetchWebhookEvents();
-  }, [fetchWebhookEvents]);
+    await fetchWebhookTodayStats();
+  }, [fetchWebhookEvents, fetchWebhookTodayStats]);
+
+  const reprocessAllFailedEvents = useCallback(async () => {
+    const { error } = await (supabase as any)
+      .from("poupeja_webhook_events")
+      .update({ processed: false, error: null })
+      .not("error", "is", null);
+    if (error) throw error;
+    await fetchWebhookEvents();
+    await fetchWebhookTodayStats();
+  }, [fetchWebhookEvents, fetchWebhookTodayStats]);
 
   const ignoreEvent = useCallback(async (id: string) => {
     const { error } = await (supabase as any).from("poupeja_webhook_events").update({ processed: true }).eq("id", id);
     if (error) throw error;
     await fetchWebhookEvents();
-  }, [fetchWebhookEvents]);
+    await fetchWebhookTodayStats();
+  }, [fetchWebhookEvents, fetchWebhookTodayStats]);
 
   const fetchIncidents = useCallback(async () => {
     setIncidentsLoading(true);
@@ -180,6 +211,7 @@ export const useAdminLogs = () => {
 
   useEffect(() => { fetchEdgeLogs(); }, [fetchEdgeLogs]);
   useEffect(() => { fetchWebhookEvents(); }, [fetchWebhookEvents]);
+  useEffect(() => { fetchWebhookTodayStats(); }, [fetchWebhookTodayStats]);
   useEffect(() => { fetchIncidents(); }, [fetchIncidents]);
   useEffect(() => { fetchAuditLogs(); }, [fetchAuditLogs]);
 
@@ -196,7 +228,9 @@ export const useAdminLogs = () => {
     eventsFilter,
     setEventsFilter,
     reprocessEvent,
+    reprocessAllFailedEvents,
     ignoreEvent,
+    webhookTodayStats,
     incidents,
     incidentsLoading,
     incidentFilter,

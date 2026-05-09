@@ -47,7 +47,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
     }
     return true;
   }, {
-    message: 'Número de WhatsApp inválido',
+    message: t('validation.invalidWhatsApp'),
     path: ['phone'],
   });
   
@@ -102,7 +102,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('auth.phone') || 'WhatsApp'}</FormLabel>
+                  <FormLabel>{t('auth.phone')}</FormLabel>
                   <FormControl>
                     <CountryPhoneInput
                       value={field.value}

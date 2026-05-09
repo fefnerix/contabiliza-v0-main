@@ -75,7 +75,7 @@ export const AdminCommandPalette = () => {
           <CommandItem onSelect={() => actions.go("/admin/communications")}>Emails</CommandItem>
           <CommandItem onSelect={() => actions.go("/admin/content")}>Conteúdo</CommandItem>
           <CommandItem onSelect={() => actions.go("/admin/settings")}>Configurações</CommandItem>
-          <CommandItem onSelect={() => actions.go("/admin/logs")}>Logs</CommandItem>
+          <CommandItem onSelect={() => actions.go("/admin/logs")}>Infraestrutura</CommandItem>
           <CommandItem onSelect={() => actions.go("/admin/audit")}>Auditoria</CommandItem>
         </CommandGroup>
 

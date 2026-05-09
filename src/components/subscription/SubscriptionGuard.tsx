@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, ArrowRight } from 'lucide-react';
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { usePreferences } from '@/contexts/PreferencesContext';
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -14,11 +15,13 @@ interface SubscriptionGuardProps {
 
 const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ 
   children, 
-  feature = "esta funcionalidade" 
+  feature: featureProp 
 }) => {
   const { subscription, isLoading } = useSubscription();
   const navigate = useNavigate();
   const { companyName } = useBrandingConfig();
+  const { t } = usePreferences();
+  const feature = featureProp ?? t('subscription.defaultFeature');
   
   // Verificar se a assinatura está dentro do período válido
   const isSubscriptionValid = React.useMemo(() => {
@@ -56,13 +59,13 @@ const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Crown className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Suscripción Necesaria</CardTitle>
+            <CardTitle className="text-2xl">{t('subscription.titleRequired')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
               {!subscription || subscription.status !== 'active' 
-                ? `Para acceder a ${feature}, necesitas una suscripción activa de ${companyName}.`
-                : `Tu suscripción expiró. Para continuar accediendo a ${feature}, necesitas renovar tu suscripción.`
+                ? t('subscription.needActive').replace('{feature}', feature).replace('{company}', companyName)
+                : t('subscription.expired').replace('{feature}', feature)
               }
             </p>
             <div className="space-y-3">
@@ -71,7 +74,7 @@ const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
                 className="w-full"
                 size="lg"
               >
-                Ver Planes
+                {t('subscription.viewPlans')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button 
@@ -79,7 +82,7 @@ const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
                 onClick={() => navigate('/dashboard')}
                 className="w-full"
               >
-                Volver al Panel
+                {t('subscription.backToHome')}
               </Button>
             </div>
           </CardContent>

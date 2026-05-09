@@ -28,7 +28,7 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
   const quickActionItems = [
     {
       icon: Receipt,
-      label: 'Transacciones',
+      label: t('nav.transactions'),
       action: () => {
         navigate('/transactions');
         setIsQuickActionsOpen(false);
@@ -48,7 +48,7 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
     },
     {
       icon: Calendar,
-      label: 'Programaciones',
+      label: t('schedule.title'),
       action: () => {
         navigate('/schedule');
         setIsQuickActionsOpen(false);
@@ -58,7 +58,7 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
     },
     {
       icon: FileText,
-      label: 'Informes',
+      label: t('nav.reports'),
       action: () => {
         navigate('/reports');
         setIsQuickActionsOpen(false);
@@ -68,7 +68,7 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
     },
     {
       icon: Tag,
-      label: 'Categorias',
+      label: t('nav.categories'),
       action: () => {
         navigate('/categories');
         setIsQuickActionsOpen(false);
@@ -83,17 +83,17 @@ const MobileNavBar: React.FC<MobileNavBarProps> = ({
     const adminMenuItems = [
       {
         icon: Shield,
-        label: 'Dashboard',
+        label: t('nav.dashboard'),
         href: '/admin'
       },
       {
         icon: Users2,
-        label: 'Clientes',
+        label: t('admin.customers'),
         href: '/admin/customers'
       },
       {
         icon: Webhook,
-        label: 'Checkouts',
+        label: t('admin.checkouts'),
         href: '/admin/checkouts'
       },
       {

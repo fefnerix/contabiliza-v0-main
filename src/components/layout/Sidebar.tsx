@@ -43,22 +43,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
     const adminMenuItems = [
       {
         icon: LayoutDashboard,
-        label: 'Dashboard',
+        label: t('nav.dashboard'),
         href: '/admin'
       },
       {
         icon: Users2,
-        label: 'Clientes',
+        label: t('admin.customers'),
         href: '/admin/customers'
       },
       {
         icon: Webhook,
-        label: 'Checkouts',
+        label: t('admin.checkouts'),
         href: '/admin/checkouts'
       },
       {
         icon: Settings,
-        label: 'Configuraciones',
+        label: t('admin.configuration'),
         href: '/admin',
         action: () => {
           if (onConfigClick) {
@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
       <div className="hidden md:flex h-screen w-64 lg:w-64 xl:w-72 flex-col bg-background border-r">
         {/* Logo/Header */}
         <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+          <h1 className="text-2xl font-bold text-primary">{t('admin.panelTitle')}</h1>
         </div>
 
         {/* Navigation */}
@@ -102,14 +102,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
             onClick={handleProfileClick}
           >
             <User className="h-5 w-5" />
-            Perfil
+            {t('nav.profile')}
           </Button>
         </nav>
 
         {/* Bottom Navigation - Theme Toggle e Logout */}
         <div className="p-4 border-t space-y-2">
           <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-muted-foreground">Tema</span>
+            <span className="text-sm text-muted-foreground">{t('settings.theme')}</span>
             <ThemeToggle variant="ghost" size="sm" />
           </div>
           <Button
@@ -118,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
-            Sair
+            {t('settings.logout')}
           </Button>
         </div>
       </div>
@@ -169,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
   if (isAdmin && !isAdminPage) {
     const adminMenuItem = {
       icon: Shield,
-      label: 'Admin',
+      label: t('admin.shortNav'),
       href: '/admin'
     };
     menuItems.push(adminMenuItem);
@@ -243,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
           
           {/* Theme Toggle */}
           <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-muted-foreground">Tema</span>
+            <span className="text-sm text-muted-foreground">{t('settings.theme')}</span>
             <ThemeToggle variant="ghost" size="sm" />
           </div>
           

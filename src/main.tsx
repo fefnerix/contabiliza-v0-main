@@ -24,12 +24,12 @@ Sentry.init({
 // Register service worker
 const updateSW = registerSW({
   onNeedRefresh() {
-    if (confirm('Novo conteúdo disponível. Atualizar?')) {
+    if (confirm('Hay contenido nuevo disponible. ¿Actualizar?')) {
       updateSW(true)
     }
   },
   onOfflineReady() {
-    console.log('Aplicativo pronto para funcionar offline')
+    console.log('La aplicación está lista para funcionar sin conexión')
   },
 })
 

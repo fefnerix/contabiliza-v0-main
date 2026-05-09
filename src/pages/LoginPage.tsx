@@ -221,7 +221,7 @@ const LoginPage = () => {
                   className="w-full py-5 bg-primary text-white" 
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Cargando...' : t('auth.login')}
+                  {isLoading ? t('common.loading') : t('auth.login')}
                 </Button>
               </form>
               
