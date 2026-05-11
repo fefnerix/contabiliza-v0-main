@@ -190,7 +190,7 @@ const AdminLogsPage = () => {
                       <TableCell>{event.error ? String(event.error).slice(0, 50) : "—"}</TableCell>
                       <TableCell>{new Date(event.created_at).toLocaleString("pt-BR")}</TableCell>
                       <TableCell className="space-x-2" onClick={(e) => e.stopPropagation()}>
-                        {!!event.error ? (
+                        {event.error ? (
                           <Button size="sm" variant="outline" onClick={() => reprocessEvent(event.id)}>
                             🔄 Reprocessar
                           </Button>
