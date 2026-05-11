@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Transaction, Goal, ScheduledTransaction } from '@/types';
 import { setupAuthListener, getCurrentSession } from '@/services/authService';
 import { recalculateGoalAmounts as recalculateGoalAmountsService } from '@/services/goalService';
+import { createLocalDate } from '@/utils/transactionUtils';
 
 // Use database types directly from Supabase
 interface Category {
@@ -295,8 +296,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Filter transactions based on time range
   const filterTransactionsByTimeRange = (transactions: Transaction[]) => {
+    const userTimezone = localStorage.getItem('userTimezone') || 'America/Sao_Paulo';
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayString = new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(now);
+    const today = createLocalDate(todayString);
     
     let startDate: Date | null = null;
     let endDate: Date | null = null;
@@ -341,8 +344,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!startDate || !endDate) return transactions;
     
     return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+      const transactionDateOnly = createLocalDate(transaction.date);
       return transactionDateOnly >= startDate && transactionDateOnly <= endDate;
     });
   };
@@ -560,6 +562,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []); // Empty dependencies as this function is self-contained
 
+  useEffect(() => {
+    if (!state.user?.id) return;
+
+    const channel = supabase
+      .channel('realtime-transactions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'poupeja_transactions',
+          filter: `user_id=eq.${state.user.id}`,
+        },
+        () => {
+          void getTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [state.user?.id]);
+
   const getGoals = useCallback(async (): Promise<Goal[]> => {
     try {
       console.log('AppContext: Fetching goals...');
@@ -656,6 +682,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
     try {
+      const user = await getCurrentUser();
       const { data, error } = await supabase
         .from('poupeja_transactions')
         .update({
@@ -665,8 +692,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           description: transaction.description,
           date: transaction.date,
           goal_id: transaction.goalId,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select(`
           *,
           category:poupeja_categories(id, name, icon, color, type)

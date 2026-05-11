@@ -80,7 +80,7 @@ const ForgotPasswordPage = () => {
           
           {emailSent ? (
             <div className="text-center">
-              <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6">
+              <div className="bg-primary/10 text-primary p-4 rounded-lg mb-6 border border-primary/20">
                 <p>Un correo electrónico con instrucciones para restablecer tu contraseña fue enviado a {email}.</p>
                 <p className="mt-2">Verifica tu bandeja de entrada y spam.</p>
               </div>

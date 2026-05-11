@@ -177,10 +177,10 @@ const CategoriesPage: React.FC = () => {
             className="w-full"
           >
             <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="expense" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
+              <TabsTrigger value="expense" className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground">
                 {t('common.expense')}
               </TabsTrigger>
-              <TabsTrigger value="income" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">
+              <TabsTrigger value="income" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {t('common.income')}
               </TabsTrigger>
             </TabsList>

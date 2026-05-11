@@ -8,6 +8,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { calculateCategorySummaries } from '@/utils/transactionUtils';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { chartStroke, piePalette, chartColorVars } from '@/lib/chart-theme';
 
 interface DashboardChartsProps {
   currentMonth?: Date;
@@ -17,8 +18,6 @@ interface DashboardChartsProps {
 
 // Generate chart data from the actual transaction data
 const generateChartData = (transactions: any[], month: Date) => {
-  console.log("Generating chart data for month:", month, "with transactions:", transactions.length);
-  
   // Create a map to group transactions by day
   const transactionsByDay = new Map();
   
@@ -107,8 +106,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
   const transactionsToUse = monthTransactions || filteredTransactions;
   const expenseSummaries = calculateCategorySummaries(transactionsToUse, 'expense');
   
-  console.log("Rendering charts with transactions:", transactionsToUse.length, "for month:", currentMonth.toDateString());
-  
   // Generate data for the current month using the provided transactions
   const monthData = generateChartData(transactionsToUse, currentMonth);
   const monthName = format(currentMonth, 'MMMM', { locale: pt });
@@ -139,6 +136,27 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
     return null;
   };
 
+  const PieCategoryLegend = ({
+    items,
+  }: {
+    items: ReturnType<typeof calculateCategorySummaries>;
+  }) => (
+    <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-muted-foreground sm:grid-cols-3">
+      {items.map((item, index) => (
+        <li key={item.category} className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: piePalette[index % piePalette.length] }}
+          />
+          <span className="truncate" title={item.category}>
+            {item.category}{' '}
+            <span className="tabular-nums text-muted-foreground/90">({item.percentage}%)</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,23 +166,41 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
             <CardTitle className="text-lg">{t('charts.incomeVsExpenses')} - {monthName}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="dateLabel" />
-                  <YAxis tickFormatter={(value) => 
-                    hideValues 
-                      ? '***' 
-                      : formatCurrency(value, currency).split('.')[0]
-                  } />
+                <LineChart
+                  data={monthData}
+                  margin={{ top: 12, right: 10, left: 4, bottom: 6 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartStroke.grid} opacity={0.6} vertical={false} />
+                  <XAxis
+                    dataKey="dateLabel"
+                    tick={{ fontSize: 11, fill: chartColorVars.axis }}
+                    tickMargin={10}
+                    angle={-32}
+                    textAnchor="end"
+                    height={52}
+                    interval={0}
+                  />
+                  <YAxis
+                    width={58}
+                    tick={{ fontSize: 11, fill: chartColorVars.axis }}
+                    tickMargin={6}
+                    axisLine={false}
+                    domain={[0, 'auto']}
+                    tickFormatter={(value) =>
+                      hideValues
+                        ? '***'
+                        : formatCurrency(value, currency).split('.')[0]
+                    }
+                  />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend wrapperStyle={{ paddingTop: 4 }} iconType="line" />
                   <Line 
                     type="monotone" 
                     dataKey="income" 
                     name={t('common.income')} 
-                    stroke="#26DE81" 
+                    stroke={chartStroke.income} 
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -173,7 +209,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
                     type="monotone" 
                     dataKey="expenses" 
                     name={t('common.expense')} 
-                    stroke="#EF4444" 
+                    stroke={chartStroke.expense} 
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -190,39 +226,48 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
             <CardTitle className="text-lg">{t('charts.expenseBreakdown')} - {monthName}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center">
+            <div className="flex min-h-[18rem] flex-col items-stretch justify-center">
               {expenseSummaries.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expenseSummaries}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="amount"
-                      nameKey="category"
-                      label={({ category, percent }) => 
-                        `${category}: ${(percent * 100).toFixed(0)}%`
-                      }
-                    >
-                      {expenseSummaries.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Legend />
-                    <Tooltip 
-                      formatter={(value) => 
-                        hideValues 
-                          ? '******' 
-                          : formatCurrency(Number(value), currency)
-                      } 
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  <div className="min-h-0 w-full flex-1 basis-[11rem]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+                        <Pie
+                          data={expenseSummaries}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="52%"
+                          outerRadius="72%"
+                          paddingAngle={2}
+                          dataKey="amount"
+                          nameKey="category"
+                          label={false}
+                          strokeWidth={0}
+                        >
+                          {expenseSummaries.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={piePalette[index % piePalette.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value) =>
+                            hideValues
+                              ? '******'
+                              : formatCurrency(Number(value), currency)
+                          }
+                          labelFormatter={(_, payload) =>
+                            (payload?.[0]?.payload as { category?: string })?.category ?? ''
+                          }
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <PieCategoryLegend items={expenseSummaries} />
+                </>
               ) : (
-                <p className="text-metacash-gray">{t('common.noData')}</p>
+                <p className="text-muted-foreground">{t('common.noData')}</p>
               )}
             </div>
           </CardContent>

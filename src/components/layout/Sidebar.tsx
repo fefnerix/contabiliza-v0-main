@@ -84,9 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
               onClick={item.action}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                  "hover:bg-muted/70 hover:text-foreground",
+                  isActive ? "bg-primary/12 text-primary" : "text-muted-foreground",
                 )
               }
             >
@@ -206,10 +206,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                  "hover:bg-muted/70 hover:text-foreground",
                   isActive 
-                    ? "bg-primary text-primary-foreground" 
+                    ? "bg-primary/12 text-primary" 
                     : "text-muted-foreground"
                 )
               }
@@ -228,10 +228,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                  "hover:bg-muted/70 hover:text-foreground",
                   isActive 
-                    ? "bg-primary text-primary-foreground" 
+                    ? "bg-primary/12 text-primary" 
                     : "text-muted-foreground"
                 )
               }

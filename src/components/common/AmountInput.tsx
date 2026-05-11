@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { UseFormReturn } from 'react-hook-form';
@@ -23,10 +23,20 @@ const AmountInput: React.FC<AmountInputProps> = ({
   form,
   maxValue = 9999999.99 // Maximum value to prevent overflow
 }) => {
+  const amountFocusedRef = useRef(false);
+
   // Estado local para armazenar o valor como string durante a edição
   const [inputValue, setInputValue] = useState<string>(
     value ? formatNumberToString(value) : ''
   );
+
+  const watchedAmount = form ? form.watch('amount') : undefined;
+
+  useEffect(() => {
+    if (!form || amountFocusedRef.current) return;
+    if (typeof watchedAmount !== 'number' || Number.isNaN(watchedAmount)) return;
+    setInputValue(formatNumberToString(watchedAmount));
+  }, [form, watchedAmount]);
 
   // Sanitize input to prevent malicious content
   const sanitizeInput = (input: string): string => {
@@ -69,7 +79,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
 
   // Formata número para string (para exibição)
   function formatNumberToString(num: number): string {
-    if (num === 0) return '';
+    if (num === 0) return '0,00';
     // Ensure number is within valid range
     const safeNum = Math.min(Math.abs(num), maxValue);
     return safeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -110,6 +120,9 @@ const AmountInput: React.FC<AmountInputProps> = ({
                   type="text"
                   inputMode="decimal"
                   value={inputValue}
+                  onFocus={() => {
+                    amountFocusedRef.current = true;
+                  }}
                   onChange={(e) => {
                     const newValue = e.target.value;
                     const sanitizedValue = sanitizeInput(newValue);
@@ -122,9 +135,11 @@ const AmountInput: React.FC<AmountInputProps> = ({
                     field.onChange(stringToNumber(sanitizedValue));
                   }}
                   onBlur={() => {
+                    amountFocusedRef.current = false;
                     // Formata o valor ao perder o foco
                     const numValue = stringToNumber(inputValue);
                     setInputValue(numValue ? formatNumberToString(numValue) : '');
+                    field.onBlur();
                   }}
                   placeholder={placeholder}
                   disabled={disabled}

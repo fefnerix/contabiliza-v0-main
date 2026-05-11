@@ -90,7 +90,7 @@ const AdminLayoutInner = () => {
             onClick={onClick}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-              active ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "text-zinc-300 hover:bg-zinc-800",
+              active ? "bg-primary/15 text-primary border border-primary/35" : "text-zinc-300 hover:bg-zinc-800",
             )}
           >
             <item.icon className="h-4 w-4" />
@@ -114,7 +114,7 @@ const AdminLayoutInner = () => {
         <aside className="hidden md:flex w-60 border-r border-[#1f1f1f] bg-[#111111] p-4 flex-col">
           <div className="mb-6 flex items-center justify-between gap-2">
             <span className="text-sm font-semibold tracking-wide text-[#e5e5e5]">{companyName}</span>
-            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">ADMIN</Badge>
+            <Badge className="bg-primary text-primary-foreground hover:bg-primary">ADMIN</Badge>
           </div>
           {nav()}
           <Button variant="ghost" className="mt-auto justify-start text-zinc-300 hover:bg-zinc-800" onClick={logout}>
@@ -146,7 +146,7 @@ const AdminLayoutInner = () => {
                 ⌘K
               </Button>
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-emerald-600 text-white text-xs">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
               </Avatar>
             </div>
           </header>

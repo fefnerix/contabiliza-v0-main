@@ -7,14 +7,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { usePreferences, Language } from '@/contexts/PreferencesContext';
-import { Flag, Globe } from 'lucide-react';
+import { usePreferences, CountryCode, Language } from '@/contexts/PreferencesContext';
+import { Flag, Globe, MapPin } from 'lucide-react';
+import { COUNTRIES, getCountryTimezone } from '@/data/countries';
 
 const LanguageCurrencySelector: React.FC = () => {
-  const { currency, setCurrency, language, setLanguage, t } = usePreferences();
+  const { currency, setCurrency, language, setLanguage, country, setCountry, timezone, setTimezone, t } = usePreferences();
+
+  const latinAmericaCountryCodes: CountryCode[] = [
+    'BR', 'AR', 'CO', 'MX', 'CL', 'PY', 'PE', 'VE', 'UY', 'EC',
+    'BO', 'CU', 'DO', 'PA', 'CR', 'GT', 'SV', 'HN', 'NI',
+  ];
+
+  const handleCountryChange = (newCountry: string) => {
+    setCountry(newCountry);
+    setTimezone(getCountryTimezone(newCountry));
+  };
 
   return (
     <div className="flex flex-col space-y-4">
+      {/* País */}
+      <div className="flex flex-col space-y-2">
+        <label htmlFor="country-select" className="text-sm font-medium">
+          {t('settings.country', 'País')}
+        </label>
+        <Select value={country} onValueChange={handleCountryChange}>
+          <SelectTrigger id="country-select" className="w-[220px]">
+            <MapPin className="mr-2 h-4 w-4" />
+            <SelectValue placeholder={t('settings.country', 'País')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {latinAmericaCountryCodes.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {COUNTRIES[code]?.name || code}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {t('settings.countryHelp', 'Sua zona horária atualiza automaticamente')} ({timezone})
+        </p>
+      </div>
+
       {/* Idioma */}
       <div className="flex flex-col space-y-2">
         <label htmlFor="language-select" className="text-sm font-medium">

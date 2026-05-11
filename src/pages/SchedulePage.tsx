@@ -364,7 +364,7 @@ const SchedulePage = () => {
                     <p className="text-sm text-muted-foreground">{selectedTransaction.category}</p>
                   </div>
                   <div className="flex flex-col items-end">
-                    <p className={selectedTransaction.type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                    <p className={selectedTransaction.type === 'income' ? 'text-primary font-medium' : 'text-destructive font-medium'}>
                       {selectedTransaction.type === 'income' ? '+' : '-'}{formatCurrency(selectedTransaction.amount, currency)}
                     </p>
                     <Badge variant={selectedTransaction.type === 'income' ? 'default' : 'destructive'} className="mt-1">
@@ -388,7 +388,7 @@ const SchedulePage = () => {
                   {!selectedTransaction.status || selectedTransaction.status === 'pending' ? (
                     <Button
                       variant="outline"
-                      className="border-green-200 text-green-600 hover:bg-green-50"
+                      className="border-primary/30 text-primary hover:bg-primary/10"
                       onClick={() => handleMarkAsPaid(selectedTransaction)}
                       disabled={!isOnline}
                       size={isMobile ? "sm" : "default"}
@@ -407,7 +407,7 @@ const SchedulePage = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-red-200 text-red-600 hover:bg-red-50"
+                    className="border-destructive/30 text-destructive hover:bg-destructive/10"
                     onClick={() => handleDeleteTransaction(selectedTransaction.id)}
                     disabled={!isOnline}
                     size={isMobile ? "sm" : "default"}

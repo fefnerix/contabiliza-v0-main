@@ -51,7 +51,7 @@ const AchievementsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-metacash-blue" />
+                <Award className="h-5 w-5 text-primary" />
                 Earned Achievements
               </CardTitle>
               <CardDescription>
@@ -62,8 +62,8 @@ const AchievementsPage = () => {
               {user.achievements.length > 0 ? (
                 <div className="space-y-4">
                   {user.achievements.map((achievement) => (
-                    <div key={achievement.id} className="flex items-center gap-4 p-3 border rounded-lg bg-slate-50">
-                      <div className="h-12 w-12 rounded-full bg-metacash-teal/20 flex items-center justify-center text-metacash-blue">
+                    <div key={achievement.id} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/40">
+                      <div className="h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center text-primary">
                         {achievementIcons[achievement.icon] || <Award className="h-6 w-6" />}
                       </div>
                       <div className="flex-1">
@@ -91,7 +91,7 @@ const AchievementsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-metacash-blue" />
+                <Star className="h-5 w-5 text-primary" />
                 Upcoming Achievements
               </CardTitle>
               <CardDescription>
@@ -104,7 +104,7 @@ const AchievementsPage = () => {
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-metacash-gray">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                           {achievementIcons[achievement.icon] || <Award className="h-5 w-5" />}
                         </div>
                         <div>
@@ -114,9 +114,9 @@ const AchievementsPage = () => {
                       </div>
                       <div className="text-sm font-medium">{achievement.progress}%</div>
                     </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-metacash-blue"
+                        className="h-full bg-primary"
                         style={{ width: `${achievement.progress}%` }}
                       ></div>
                     </div>

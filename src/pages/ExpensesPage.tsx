@@ -12,6 +12,7 @@ import TransactionForm from '@/components/common/TransactionForm';
 import TimeRangeSelector from '@/components/common/TimeRangeSelector';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { formatCurrency } from '@/utils/transactionUtils';
+import { piePalette } from '@/lib/chart-theme';
 import { useToast } from '@/components/ui/use-toast';
 
 const ExpensesPage = () => {
@@ -35,8 +36,6 @@ const ExpensesPage = () => {
       value
     }));
   }, [expenses]);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
   const handleAddExpense = () => {
     setSelectedTransaction(null);
@@ -105,12 +104,12 @@ const ExpensesPage = () => {
                         cy="50%"
                         labelLine={false}
                         outerRadius={80}
-                        fill="#8884d8"
+                        fill="hsl(var(--muted-foreground) / 0.35)"
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
                         {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={piePalette[index % piePalette.length]} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => {

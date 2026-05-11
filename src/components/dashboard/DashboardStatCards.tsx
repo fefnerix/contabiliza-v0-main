@@ -46,7 +46,7 @@ const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({
         whileHover={{ scale: 1.02, y: -4 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className="relative overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+        <Card className="relative overflow-hidden border border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-primary via-primary/90 to-primary/75">
           <CardContent className="p-4 lg:p-6">
             <div className="text-center text-white relative z-10">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -70,24 +70,24 @@ const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({
         transition={{ duration: 0.2 }}
       >
         <Card 
-          className="relative overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20" 
+          className="relative overflow-hidden border border-primary/15 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer bg-primary/[0.06] dark:bg-primary/10" 
           onClick={() => onNavigateToTransactionType('income')}
         >
           <CardContent className="p-4 lg:p-6">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30">
-                  <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-green-600 dark:text-green-400" />
+                <div className="p-2 rounded-full bg-primary/15">
+                  <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
                 </div>
-                <p className="text-xs lg:text-sm font-medium text-green-700 dark:text-green-400">
+                <p className="text-xs lg:text-sm font-medium text-primary">
                   {t('common.income')}
                 </p>
               </div>
-              <p className="text-xl lg:text-2xl xl:text-3xl font-bold text-green-700 dark:text-green-400">
+              <p className="text-xl lg:text-2xl xl:text-3xl font-bold text-primary">
                 {hideValues ? renderHiddenValue() : formatCurrency(totalIncome, currency)}
               </p>
             </div>
-            <div className="absolute -bottom-2 -right-2 w-12 h-12 lg:w-16 lg:h-16 bg-green-200/30 dark:bg-green-800/20 rounded-full" />
+            <div className="absolute -bottom-2 -right-2 w-12 h-12 lg:w-16 lg:h-16 bg-primary/10 rounded-full" />
           </CardContent>
         </Card>
       </motion.div>
@@ -99,24 +99,24 @@ const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({
         className="sm:col-span-2 lg:col-span-1"
       >
         <Card 
-          className="relative overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20" 
+          className="relative overflow-hidden border border-destructive/15 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer bg-destructive/[0.06] dark:bg-destructive/10" 
           onClick={() => onNavigateToTransactionType('expense')}
         >
           <CardContent className="p-4 lg:p-6">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/30">
-                  <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-red-600 dark:text-red-400" />
+                <div className="p-2 rounded-full bg-destructive/15">
+                  <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-destructive" />
                 </div>
-                <p className="text-xs lg:text-sm font-medium text-red-700 dark:text-red-400">
+                <p className="text-xs lg:text-sm font-medium text-destructive">
                   {t('common.expense')}
                 </p>
               </div>
-              <p className="text-xl lg:text-2xl xl:text-3xl font-bold text-red-700 dark:text-red-400">
+              <p className="text-xl lg:text-2xl xl:text-3xl font-bold text-destructive">
                 {hideValues ? renderHiddenValue() : formatCurrency(totalExpenses, currency)}
               </p>
             </div>
-            <div className="absolute -bottom-2 -right-2 w-12 h-12 lg:w-16 lg:h-16 bg-red-200/30 dark:bg-red-800/20 rounded-full" />
+            <div className="absolute -bottom-2 -right-2 w-12 h-12 lg:w-16 lg:h-16 bg-destructive/10 rounded-full" />
           </CardContent>
         </Card>
       </motion.div>

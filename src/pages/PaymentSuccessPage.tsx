@@ -217,12 +217,12 @@ const PaymentSuccessPage = () => {
   const renderSystemStatus = () => {
     if (systemStatus === 'error') {
       return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-800 mb-2">
+        <div className="bg-destructive/10 border border-destructive/25 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-destructive mb-2">
             <AlertTriangle className="h-5 w-5" />
             <h4 className="font-medium">Sistema Temporalmente Indisponible</h4>
           </div>
-          <p className="text-sm text-red-700 mb-3">
+          <p className="text-sm text-destructive/90 mb-3">
             El sistema de creación automática de usuarios está con problemas. 
             Tu pago fue procesado con éxito, pero la cuenta puede necesitar ser creada manualmente.
           </p>
@@ -271,17 +271,17 @@ const PaymentSuccessPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-green-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/[0.06] via-background to-primary/[0.06] flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <Card className="border-0 shadow-xl">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-primary" />
               </div>
             </div>
             
-            <CardTitle className="text-2xl text-green-700 mb-2">
+            <CardTitle className="text-2xl text-primary mb-2">
               ¡Pago Confirmado!
             </CardTitle>
             <p className="text-muted-foreground">
@@ -290,23 +290,23 @@ const PaymentSuccessPage = () => {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Próximos pasos:</h4>
-              <p className="text-sm text-blue-800">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <h4 className="font-medium text-foreground mb-2">Próximos pasos:</h4>
+              <p className="text-sm text-muted-foreground">
                 Ahora puedes activar tu número en WhatsApp o acceder directamente a tu área de usuario.
               </p>
             </div>
 
             {/* Status da verificação */}
             {isCheckingUser && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-blue-800">
+              <div className="bg-muted/50 border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 text-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="font-medium">
                     Verificando activación de la cuenta... (Intento {checkAttempts + 1})
                   </span>
                 </div>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Espera mientras sincronizamos tu pago.
                 </p>
               </div>
@@ -314,24 +314,24 @@ const PaymentSuccessPage = () => {
 
             {/* Resultado da verificação */}
             {!isCheckingUser && userExists && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-green-800">
+              <div className="bg-primary/10 border border-primary/25 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-primary">
                   <CheckCircle className="h-4 w-4" />
                   <span className="font-medium">¡Cuenta activada con éxito!</span>
                 </div>
-                <p className="text-sm text-green-700 mt-1">
+                <p className="text-sm text-primary/90 mt-1">
                   Tu cuenta fue creada y tu suscripción está activa.
                 </p>
               </div>
             )}
 
             {!isCheckingUser && !userExists && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-amber-800">
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="font-medium">Activación en proceso</span>
                 </div>
-                <p className="text-sm text-amber-700 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Tu pago fue procesado, pero la cuenta aún se está creando. Usa WhatsApp para una activación rápida.
                 </p>
               </div>
@@ -341,7 +341,7 @@ const PaymentSuccessPage = () => {
             <div className="space-y-3">
               <Button 
                 onClick={handleWhatsAppActivation}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full"
                 size="lg"
                 disabled={configLoading}
               >
@@ -360,7 +360,8 @@ const PaymentSuccessPage = () => {
               
               <Button 
                 onClick={handleAccessApp}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                variant="secondary"
+                className="w-full"
                 size="lg"
                 disabled={isLoggingIn || (!userExists && !isCheckingUser)}
               >

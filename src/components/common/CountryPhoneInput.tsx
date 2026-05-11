@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 interface CountryPhoneInputProps {
   value: string;
   onChange: (value: string) => void;
+  onCountryChange?: (countryCode: string) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -28,6 +29,7 @@ interface CountryPhoneInputProps {
 const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
   value,
   onChange,
+  onCountryChange,
   label = 'WhatsApp',
   placeholder = 'Digite su número',
   required = false,
@@ -45,8 +47,9 @@ const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
   useEffect(() => {
     if (!isDetecting && detectedCountry) {
       setSelectedCountry(detectedCountry);
+      onCountryChange?.(detectedCountry.code);
     }
-  }, [isDetecting, detectedCountry]);
+  }, [isDetecting, detectedCountry, onCountryChange]);
 
   // Filtra países baseado no termo de busca
   const filteredCountries = countries.filter(country =>
@@ -59,6 +62,7 @@ const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
     const country = getCountryByCode(countryCode);
     if (country) {
       setSelectedCountry(country);
+      onCountryChange?.(country.code);
       setIsOpen(false);
       setSearchTerm('');
       

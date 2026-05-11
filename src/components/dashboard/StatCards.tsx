@@ -29,26 +29,26 @@ const StatCards: React.FC<StatCardsProps> = ({ transactions }) => {
       <StatCard
         title={t('stats.currentBalance')}
         value={formatCurrency(balance, currency)}
-        icon={<Wallet className="h-4 w-4 text-white" />}
-        className="border-none bg-gradient-to-br from-metacash-blue to-primary text-white shadow-lg hover:shadow-xl transition-all"
+        icon={<Wallet className="h-4 w-4 text-primary-foreground" />}
+        className="border-none bg-gradient-to-br from-primary to-primary/75 text-primary-foreground shadow-md hover:shadow-lg transition-all"
       />
       <StatCard
         title={t('stats.totalIncome')}
         value={formatCurrency(totalIncome, currency)}
         icon={<TrendingUp className="h-4 w-4 text-white" />}
-        className="border-none bg-gradient-to-br from-metacash-success to-green-600 text-white shadow-lg hover:shadow-xl transition-all"
+        className="border-none bg-gradient-to-br from-chart-1 to-primary/80 text-white shadow-md hover:shadow-lg transition-all"
       />
       <StatCard
         title={t('stats.totalExpenses')}
         value={formatCurrency(totalExpenses, currency)}
-        icon={<TrendingDown className="h-4 w-4 text-white" />}
-        className="border-none bg-gradient-to-br from-metacash-error to-red-600 text-white shadow-lg hover:shadow-xl transition-all"
+        icon={<TrendingDown className="h-4 w-4 text-destructive-foreground" />}
+        className="border-none bg-gradient-to-br from-destructive to-destructive/85 text-destructive-foreground shadow-md hover:shadow-lg transition-all"
       />
       <StatCard
         title={t('stats.goalProgress')}
         value={`${goalPercentage}%`}
         icon={<Target className="h-4 w-4 text-white" />}
-        className="border-none bg-gradient-to-br from-metacash-teal to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all"
+        className="border-none bg-gradient-to-br from-chart-3 to-chart-5 text-white shadow-md hover:shadow-lg transition-all"
         change={goalPercentage > 0 ? {
           value: goalPercentage,
           isPositive: true

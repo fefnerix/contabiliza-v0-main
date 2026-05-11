@@ -147,9 +147,9 @@ const GoalsPage = () => {
                       <span>{t('goals.currentAmount')}: {formatCurrency(selectedGoal.currentAmount, currency)}</span>
                       <span>{t('goals.targetAmount')}: {formatCurrency(selectedGoal.targetAmount, currency)}</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-metacash-teal"
+                        className="h-full bg-primary"
                         style={{
                           width: `${Math.min(
                             Math.round((selectedGoal.currentAmount / selectedGoal.targetAmount) * 100),
@@ -177,7 +177,7 @@ const GoalsPage = () => {
                               <div className="font-medium">{transaction.description}</div>
                               <div className="text-sm text-muted-foreground">{transaction.category}</div>
                             </div>
-                            <div className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                            <div className={transaction.type === 'income' ? 'text-primary' : 'text-destructive'}>
                               {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
                             </div>
                           </div>

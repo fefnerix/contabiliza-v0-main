@@ -75,7 +75,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
 
       {/* Transações recentes */}
       <motion.div variants={itemVariants}>
-        <Card className="shadow-lg border-0">
+        <Card className="shadow-sm border border-border/50">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold">{t('transactions.recent')}</h3>

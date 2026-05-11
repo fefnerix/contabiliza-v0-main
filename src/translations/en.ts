@@ -143,6 +143,13 @@ const en = {
   transactions: {
     title: "Transactions",
     addTransaction: "Add Transaction",
+    edit: {
+      title: "Edit transaction",
+      description: "Modify the transaction details.",
+      success: "Transaction updated!",
+      successDesc: "Your changes have been saved.",
+      error: "Could not update. Please try again.",
+    },
     editTransaction: "Edit Transaction",
     deleteTransaction: "Delete Transaction",
     deleteSuccess: "Transaction deleted successfully",
@@ -295,6 +302,10 @@ const en = {
     managePreferences: "Manage your preferences",
     manageAccount: "Manage your account",
     manageNotifications: "Manage your notifications",
+    language: "Language",
+    currency: "Currency",
+    country: "Country",
+    countryHelp: "Your time zone updates automatically",
   },
   login: {
     title: "Login",

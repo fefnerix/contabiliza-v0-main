@@ -56,7 +56,8 @@ const LandingPage = () => {
         
         // Detectar preferência do sistema e aplicar
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        const savedTheme = localStorage.getItem("metacash-ui-theme");
+        const savedTheme =
+          localStorage.getItem("contabiliza-ui-theme") ?? localStorage.getItem("metacash-ui-theme");
         
         if (savedTheme === "system" || !savedTheme) {
           root.classList.add(systemTheme);

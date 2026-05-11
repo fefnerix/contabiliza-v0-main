@@ -3,6 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
+export interface UpdateTransactionData {
+  type?: "income" | "expense";
+  amount?: number;
+  category_id?: string | null;
+  description?: string | null;
+  date?: string;
+  goal_id?: string | null;
+}
+
 export const getTransactions = async (): Promise<Transaction[]> => {
   try {
     const { data, error } = await supabase
@@ -122,54 +131,24 @@ export const addTransaction = async (transaction: Omit<Transaction, "id">): Prom
   }
 };
 
-export const updateTransaction = async (transaction: Transaction): Promise<Transaction | null> => {
+export const updateTransaction = async (
+  id: string,
+  data: UpdateTransactionData
+): Promise<Transaction> => {
   try {
-    // First, get the old transaction to check if goal_id or amount changed
-    const { data: oldTransaction } = await supabase
-      .from("poupeja_transactions")
-      .select("goal_id, amount, type")
-      .eq("id", transaction.id)
-      .single();
-
-    // Get category ID - if it's already an ID, use it directly, otherwise find by name
-    let categoryId = transaction.category;
-    
-    // Check if the category is actually a category ID by trying to find it
-    const { data: categoryCheck } = await supabase
-      .from("poupeja_categories")
-      .select("id")
-      .eq("id", transaction.category)
-      .single();
-    
-    if (!categoryCheck) {
-      // If not found by ID, try to find by name
-      const { data: categoryByName } = await supabase
-        .from("poupeja_categories")
-        .select("id")
-        .eq("name", transaction.category)
-        .eq("type", transaction.type)
-        .single();
-      
-      if (categoryByName) {
-        categoryId = categoryByName.id;
-      } else {
-        // Fallback to default "Outros" category
-        const defaultCategoryId = transaction.type === 'income' ? 'other-income' : 'other-expense';
-        categoryId = defaultCategoryId;
-      }
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      throw new Error("You must be logged in to update a transaction");
     }
 
-    const { data, error } = await supabase
+    const { data: updated, error } = await supabase
       .from("poupeja_transactions")
       .update({
-        type: transaction.type,
-        amount: transaction.amount,
-        category_id: categoryId,
-        description: transaction.description,
-        date: transaction.date,
-        goal_id: transaction.goalId
+        ...data,
+        updated_at: new Date().toISOString(),
       })
-      .eq("id", transaction.id)
+      .eq("id", id)
+      .eq("user_id", authData.user.id)
       .select(`
         *,
         category:poupeja_categories(id, name, icon, color, type)
@@ -177,40 +156,26 @@ export const updateTransaction = async (transaction: Transaction): Promise<Trans
       .single();
 
     if (error) throw error;
-
-    // Update goal amounts if needed
-    if (oldTransaction) {
-      // If old transaction was income and linked to a goal, subtract the old amount
-      if (oldTransaction.type === 'income' && oldTransaction.goal_id) {
-        await supabase.rpc('update_goal_amount', {
-          p_goal_id: oldTransaction.goal_id,
-          p_amount_change: -oldTransaction.amount
-        });
-      }
-
-      // If new transaction is income and linked to a goal, add the new amount
-      if (transaction.type === 'income' && transaction.goalId) {
-        await supabase.rpc('update_goal_amount', {
-          p_goal_id: transaction.goalId,
-          p_amount_change: transaction.amount
-        });
-      }
-    }
+    if (!updated) throw new Error("Transaction not found");
 
     return {
-      id: data.id,
-      type: data.type as 'income' | 'expense',
-      amount: data.amount,
-      category: data.category?.name || "Outros",
-      categoryIcon: data.category?.icon || "circle",
-      categoryColor: data.category?.color || "#607D8B",
-      description: data.description || "",
-      date: data.date,
-      goalId: data.goal_id || undefined
+      id: updated.id,
+      type: updated.type as "income" | "expense",
+      amount: updated.amount,
+      category: updated.category?.name || "Outros",
+      categoryIcon: updated.category?.icon || "circle",
+      categoryColor: updated.category?.color || "#607D8B",
+      description: updated.description || "",
+      date: updated.date,
+      goalId: updated.goal_id || undefined,
+      category_id: updated.category_id || undefined,
+      goal_id: updated.goal_id || undefined,
+      user_id: updated.user_id || undefined,
+      created_at: updated.created_at || undefined,
     };
   } catch (error) {
     console.error("Error updating transaction:", error);
-    return null;
+    throw error;
   }
 };
 

@@ -152,7 +152,7 @@ const Index = () => {
   };
   
   return (
-    <MainLayout title={t('dashboard.title')} onAddTransaction={handleAddTransaction}>
+    <MainLayout onAddTransaction={handleAddTransaction}>
       {/* 🔁 aqui estava em PT: "o dashboard completo" */}
       <SubscriptionGuard feature={t('plans.features.dashboard')}>
         <motion.div 

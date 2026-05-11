@@ -6,6 +6,14 @@ export interface Country {
   flagEmoji: string;
 }
 
+export interface CountryInfo {
+  code: string; // ISO 2-letter
+  name: string;
+  timezone: string;
+  currency?: string;
+  language?: string;
+}
+
 export const countries: Country[] = [
   {
     code: 'BR',
@@ -481,4 +489,30 @@ export const getCountryByPhoneCode = (phoneCode: string): Country | undefined =>
 
 export const getDefaultCountry = (): Country => {
   return getCountryByCode('BR') || countries[0];
+};
+
+export const COUNTRIES: Record<string, CountryInfo> = {
+  BR: { code: 'BR', name: 'Brasil', timezone: 'America/Sao_Paulo', currency: 'BRL', language: 'pt' },
+  AR: { code: 'AR', name: 'Argentina', timezone: 'America/Argentina/Buenos_Aires', currency: 'ARS', language: 'es' },
+  CO: { code: 'CO', name: 'Colombia', timezone: 'America/Bogota', currency: 'COP', language: 'es' },
+  MX: { code: 'MX', name: 'México', timezone: 'America/Mexico_City', currency: 'MXN', language: 'es' },
+  CL: { code: 'CL', name: 'Chile', timezone: 'America/Santiago', currency: 'CLP', language: 'es' },
+  PY: { code: 'PY', name: 'Paraguay', timezone: 'America/Asuncion', currency: 'PYG', language: 'es' },
+  PE: { code: 'PE', name: 'Perú', timezone: 'America/Lima', currency: 'PEN', language: 'es' },
+  VE: { code: 'VE', name: 'Venezuela', timezone: 'America/Caracas', currency: 'VES', language: 'es' },
+  UY: { code: 'UY', name: 'Uruguay', timezone: 'America/Montevideo', currency: 'UYU', language: 'es' },
+  EC: { code: 'EC', name: 'Ecuador', timezone: 'America/Guayaquil', currency: 'USD', language: 'es' },
+  BO: { code: 'BO', name: 'Bolivia', timezone: 'America/La_Paz', currency: 'BOB', language: 'es' },
+  CU: { code: 'CU', name: 'Cuba', timezone: 'America/Havana', currency: 'CUP', language: 'es' },
+  DO: { code: 'DO', name: 'República Dominicana', timezone: 'America/Santo_Domingo', currency: 'DOP', language: 'es' },
+  PA: { code: 'PA', name: 'Panamá', timezone: 'America/Panama', currency: 'PAB', language: 'es' },
+  CR: { code: 'CR', name: 'Costa Rica', timezone: 'America/Costa_Rica', currency: 'CRC', language: 'es' },
+  GT: { code: 'GT', name: 'Guatemala', timezone: 'America/Guatemala', currency: 'GTQ', language: 'es' },
+  SV: { code: 'SV', name: 'El Salvador', timezone: 'America/El_Salvador', currency: 'SVC', language: 'es' },
+  HN: { code: 'HN', name: 'Honduras', timezone: 'America/Tegucigalpa', currency: 'HNL', language: 'es' },
+  NI: { code: 'NI', name: 'Nicaragua', timezone: 'America/Managua', currency: 'NIO', language: 'es' },
+};
+
+export const getCountryTimezone = (countryCode: string): string => {
+  return COUNTRIES[countryCode]?.timezone || 'America/Sao_Paulo';
 };

@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,6 +9,61 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { getCategoriesByType } from '@/services/categoryService';
 import CategoryIcon from '@/components/categories/CategoryIcon';
 import { translateCategoryName } from '@/utils/categoryI18n';
+
+function isoToDdMmYyyy(iso: string): string {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function ddMmYyyyToIso(display: string): string | null {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(display)) return null;
+  const [d, m, y] = display.split('/');
+  return `${y}-${m}-${d}`;
+}
+
+interface TransactionDateMaskedInputProps {
+  value: string;
+  onChange: (iso: string) => void;
+  onBlur: () => void;
+}
+
+const TransactionDateMaskedInput: React.FC<TransactionDateMaskedInputProps> = ({
+  value,
+  onChange,
+  onBlur,
+}) => {
+  const [text, setText] = useState(() => isoToDdMmYyyy(value));
+
+  useEffect(() => {
+    setText(isoToDdMmYyyy(value));
+  }, [value]);
+
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      placeholder="DD/MM/AAAA"
+      maxLength={10}
+      value={text}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+        let masked = digits;
+        if (digits.length > 2) masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+        if (digits.length > 4) masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+        setText(masked);
+        const iso = ddMmYyyyToIso(masked);
+        if (iso) onChange(iso);
+      }}
+      onBlur={() => {
+        const iso = ddMmYyyyToIso(text);
+        if (iso) onChange(iso);
+        else if (!text.trim()) onChange('');
+        onBlur();
+      }}
+    />
+  );
+};
 
 interface CategoryDateFieldsProps {
   form: UseFormReturn<TransactionFormValues>;
@@ -115,7 +170,11 @@ const CategoryDateFields: React.FC<CategoryDateFieldsProps> = ({ form, transacti
           <FormItem>
             <FormLabel>{t('transactions.date')}</FormLabel>
             <FormControl>
-              <Input type="date" {...field} />
+              <TransactionDateMaskedInput
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

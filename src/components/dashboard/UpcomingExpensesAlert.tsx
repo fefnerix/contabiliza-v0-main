@@ -135,7 +135,7 @@ const UpcomingExpensesAlert: React.FC<UpcomingExpensesAlertProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => onMarkAsPaid(categorizedExpenses.overdue[0])}
-                className="h-8 px-3 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/20"
+                className="h-8 px-3 border-primary/30 text-primary hover:bg-primary/10"
               >
                 <span className="text-xs">Pagar</span>
               </Button>

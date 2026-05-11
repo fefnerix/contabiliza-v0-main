@@ -3,6 +3,16 @@ import { createRoot } from 'react-dom/client'
 import * as Sentry from "@sentry/react";
 import App from './App.tsx'
 import './index.css'
+
+const THEME_KEY = 'contabiliza-ui-theme';
+const LEGACY_THEME_KEY = 'metacash-ui-theme';
+try {
+  if (!localStorage.getItem(THEME_KEY) && localStorage.getItem(LEGACY_THEME_KEY)) {
+    localStorage.setItem(THEME_KEY, localStorage.getItem(LEGACY_THEME_KEY)!);
+  }
+} catch {
+  /* ignore private mode */
+}
 import { registerSW } from 'virtual:pwa-register'
 
 Sentry.init({

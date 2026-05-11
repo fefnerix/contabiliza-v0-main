@@ -10,15 +10,13 @@ import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerDrawer } from "@/components/admin/CustomerDrawer";
 import { AdminCustomer } from "@/hooks/useAdminCustomers";
+import { adminPlanChartColors, chartStroke } from "@/lib/chart-theme";
 
 const money = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 const pct = (v: number) => `${v.toFixed(2)}%`;
-const planColor: Record<string, string> = {
-  monthly: "#16a34a",
-  annual: "#2563eb",
-  lifetime: "#7c3aed",
-  trial: "#d97706",
-};
+
+const planColor = (planType: string) =>
+  adminPlanChartColors[planType] ?? "hsl(var(--muted-foreground))";
 
 const kpiFormula: Record<string, string> = {
   MRR: "Soma da receita mensal recorrente dos planos ativos.",
@@ -39,7 +37,7 @@ const AdminAnalyticsPage = () => {
   const trialRate = counts.trialsTotal > 0 ? (counts.converted / counts.trialsTotal) * 100 : 0;
 
   const pieData = useMemo(
-    () => planDistribution.map((p) => ({ ...p, color: planColor[p.plan_type] || "#64748b" })),
+    () => planDistribution.map((p) => ({ ...p, color: planColor(p.plan_type) })),
     [planDistribution],
   );
 
@@ -79,8 +77,8 @@ const AdminAnalyticsPage = () => {
         {[
           { label: "MRR", value: money(kpis.mrr), trend: "—", key: "MRR" },
           { label: "ARR", value: money(kpis.arr), trend: "—", key: "ARR" },
-          { label: "Churn Rate", value: pct(kpis.churnRate), trend: "—", key: "Churn Rate", tone: kpis.churnRate > 5 ? "text-red-400" : "" },
-          { label: "NRR", value: pct(kpis.nrr), trend: "—", key: "NRR", tone: kpis.nrr > 100 ? "text-emerald-400" : "" },
+          { label: "Churn Rate", value: pct(kpis.churnRate), trend: "—", key: "Churn Rate", tone: kpis.churnRate > 5 ? "text-destructive" : "" },
+          { label: "NRR", value: pct(kpis.nrr), trend: "—", key: "NRR", tone: kpis.nrr > 100 ? "text-primary" : "" },
           { label: "ARPU", value: money(kpis.arpu), trend: "—", key: "ARPU" },
           { label: "LTV Estimado", value: money(kpis.ltv), trend: "—", key: "LTV Estimado" },
         ].map((k) => (
@@ -89,14 +87,14 @@ const AdminAnalyticsPage = () => {
               <CardTitle className="text-sm flex items-center gap-2">
                 {k.label}
                 <Tooltip>
-                  <TooltipTrigger asChild><Info className="h-3.5 w-3.5 text-zinc-400" /></TooltipTrigger>
+                  <TooltipTrigger asChild><Info className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
                   <TooltipContent>{kpiFormula[k.key]}</TooltipContent>
                 </Tooltip>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className={`text-2xl font-bold ${k.tone ?? ""}`}>{k.value}</p>
-              <p className="text-xs text-zinc-400">{k.trend}</p>
+              <p className="text-xs text-muted-foreground">{k.trend}</p>
             </CardContent>
           </Card>
         ))}
@@ -107,11 +105,11 @@ const AdminAnalyticsPage = () => {
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={mrrHistory}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartStroke.grid} opacity={0.55} />
               <XAxis dataKey="month" />
               <YAxis />
               <ReTooltip formatter={(v: number) => money(Number(v))} />
-              <Line type="monotone" dataKey="mrr" stroke="#16a34a" strokeWidth={2} />
+              <Line type="monotone" dataKey="mrr" stroke={chartStroke.mrr} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -158,16 +156,17 @@ const AdminAnalyticsPage = () => {
       <div className="grid md:grid-cols-3 gap-4">
         <Card><CardHeader><CardTitle>DAU</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{engagement.dau}</p></CardContent></Card>
         <Card><CardHeader><CardTitle>MAU</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{engagement.mau}</p></CardContent></Card>
-        <Card><CardHeader><CardTitle>Ratio DAU/MAU</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{ratio.toFixed(1)}%</p><p className="text-xs text-zinc-400 mt-1">{ratioBadge}</p></CardContent></Card>
+        <Card><CardHeader><CardTitle>Ratio DAU/MAU</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{ratio.toFixed(1)}%</p><p className="text-xs text-muted-foreground mt-1">{ratioBadge}</p></CardContent></Card>
       </div>
       <Card>
         <CardContent className="pt-6">
-          <p className="text-sm text-zinc-400">Para histórico completo de logins, configure evento de tracking.</p>
+          <p className="text-sm text-muted-foreground">Para histórico completo de logins, configure evento de tracking.</p>
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={[{ d: "Hoje", v: engagement.dau }, { d: "30d", v: engagement.mau }]}>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartStroke.grid} opacity={0.45} />
               <XAxis dataKey="d" />
               <YAxis />
-              <Line type="monotone" dataKey="v" stroke="#16a34a" />
+              <Line type="monotone" dataKey="v" stroke={chartStroke.mrr} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -176,7 +175,7 @@ const AdminAnalyticsPage = () => {
       <Card>
         <CardHeader><CardTitle>Clientes em risco</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-sm text-zinc-400 mb-3">Estes clientes têm maior probabilidade de churn nos próximos 30 dias.</p>
+          <p className="text-sm text-muted-foreground mb-3">Estes clientes têm maior probabilidade de churn nos próximos 30 dias.</p>
           <Table>
             <TableHeader><TableRow><TableHead></TableHead><TableHead>Nome</TableHead><TableHead>Email</TableHead><TableHead>Score</TableHead><TableHead>Último login</TableHead><TableHead>Expira em</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>

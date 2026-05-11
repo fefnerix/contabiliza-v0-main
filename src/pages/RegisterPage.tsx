@@ -10,17 +10,42 @@ import { useBrandingConfig } from '@/hooks/useBrandingConfig';
 import { toE164WhatsApp } from '@/utils/phone';
 import CountryPhoneInput from '@/components/common/CountryPhoneInput';
 import { trackFacebookEvents } from '@/utils/facebookTracking';
+import { usePreferences, Currency, Language } from '@/contexts/PreferencesContext';
+import { COUNTRIES, getCountryTimezone } from '@/data/countries';
+
+const COUNTRY_DEFAULTS: Record<string, { timezone: string; language: Language; currency: Currency }> = {
+  BR: { timezone: 'America/Sao_Paulo', language: 'pt', currency: 'BRL' },
+  MX: { timezone: 'America/Mexico_City', language: 'es', currency: 'MXN' },
+  CO: { timezone: 'America/Bogota', language: 'es', currency: 'COP' },
+  AR: { timezone: 'America/Argentina/Buenos_Aires', language: 'es', currency: 'ARS' },
+  CL: { timezone: 'America/Santiago', language: 'es', currency: 'CLP' },
+  PE: { timezone: 'America/Lima', language: 'es', currency: 'PEN' },
+  US: { timezone: 'America/New_York', language: 'en', currency: 'USD' },
+};
+
+const FALLBACK_COUNTRY_DEFAULTS: { timezone: string; language: Language; currency: Currency } = {
+  timezone: 'UTC',
+  language: 'es',
+  currency: 'USD',
+};
 
 const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { companyName, logoUrl, logoAltText } = useBrandingConfig();
+  const {
+    setCountry,
+    setTimezone,
+    setLanguage,
+    setCurrency,
+  } = usePreferences();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [countryCode, setCountryCode] = useState('BR');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -108,6 +133,15 @@ const RegisterPage = () => {
     if (whatsappError) {
       setWhatsappError(null);
     }
+  };
+
+  const handleCountryChange = (newCountryCode: string) => {
+    setCountryCode(newCountryCode);
+    const defaults = COUNTRY_DEFAULTS[newCountryCode] || FALLBACK_COUNTRY_DEFAULTS;
+    setCountry(newCountryCode);
+    setTimezone(defaults.timezone);
+    setLanguage(defaults.language);
+    setCurrency(defaults.currency);
   };
 
   // Função para validar email em tempo real
@@ -246,14 +280,30 @@ const RegisterPage = () => {
       const formattedPhone = whatsapp ? toE164WhatsApp(whatsapp) : '';
   
       console.log('Iniciando processo de registro...');
+
+      // Sugere preferências padrão com base no país escolhido no cadastro.
+      const countryInfo = COUNTRIES[countryCode];
+      const defaults = COUNTRY_DEFAULTS[countryCode] || FALLBACK_COUNTRY_DEFAULTS;
+      const suggestedLanguage = defaults.language || (countryInfo?.language as Language) || FALLBACK_COUNTRY_DEFAULTS.language;
+      const suggestedCurrency = defaults.currency || (countryInfo?.currency as Currency) || FALLBACK_COUNTRY_DEFAULTS.currency;
+      const suggestedTimezone = defaults.timezone || getCountryTimezone(countryCode) || FALLBACK_COUNTRY_DEFAULTS.timezone;
+      setCountry(countryCode);
+      setTimezone(suggestedTimezone);
+      setLanguage(suggestedLanguage);
+      setCurrency(suggestedCurrency);
       
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
+            name: fullName,
             full_name: fullName,
             phone: formattedPhone,
+            country: countryCode,
+            timezone: suggestedTimezone,
+            language: suggestedLanguage,
+            currency: suggestedCurrency,
           },
         },
       });
@@ -489,6 +539,7 @@ const RegisterPage = () => {
             <CountryPhoneInput
               value={whatsapp}
               onChange={handleWhatsappChange}
+              onCountryChange={handleCountryChange}
               placeholder="(DDD) número — ej.: 11 1234-5678"
               required
               error={whatsappError || error}

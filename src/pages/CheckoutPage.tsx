@@ -156,7 +156,7 @@ const CheckoutPage = () => {
                   {planItem.originalPrice && (
                     <div className="mt-2">
                       <span className="text-sm text-muted-foreground line-through">{planItem.originalPrice}</span>
-                      <span className="ml-2 text-sm font-medium text-green-600">{planItem.savings}</span>
+                      <span className="ml-2 text-sm font-medium text-primary">{planItem.savings}</span>
                     </div>
                   )}
                 </div>

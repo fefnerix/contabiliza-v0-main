@@ -39,8 +39,8 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center max-w-md px-4">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-red-100 p-4">
-            <FileWarning className="h-12 w-12 text-red-600" />
+          <div className="rounded-full bg-destructive/15 p-4">
+            <FileWarning className="h-12 w-12 text-destructive" />
           </div>
         </div>
         <h1 className="text-4xl font-bold mb-4">{t('errors.pageNotFound')}</h1>

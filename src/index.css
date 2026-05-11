@@ -1,92 +1,102 @@
 
-/* Inter font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Light mode */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Light — neutros levemente “off” (estilo calmo, leitura longa) */
+    --background: 210 35% 98.5%;
+    --foreground: 222 44% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 44% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 222 44% 12%;
 
-    --primary: 142 76% 36%; /* Verde */
+    /* Marca: verde Contabiliza — saturação ligeiramente contida */
+    --primary: 142 72% 34%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 158 64% 52%; /* Verde claro */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 158 58% 48%;
+    --secondary-foreground: 222 44% 12%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 32% 96.5%;
+    --muted-foreground: 215 16% 44%;
 
-    --accent: 142 76% 36%; /* Verde */
+    --accent: 142 72% 34%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 78% 56%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 192 47% 34%;
+    --border: 214 28% 90%;
+    --input: 214 28% 90%;
+    --ring: 142 50% 38%;
 
     --radius: 1rem;
 
-    --sidebar-background: 142 76% 36%;
+    /* Séries de gráficos (Recharts / shadcn Chart) — receita, despesa, apoio */
+    --chart-1: 142 72% 36%;
+    --chart-2: 0 72% 52%;
+    --chart-3: 158 55% 42%;
+    --chart-4: 215 18% 48%;
+    --chart-5: 38 92% 50%;
+
+    --sidebar-background: 142 72% 32%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 158 64% 52%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 142 76% 25%;
+    --sidebar-primary: 158 58% 48%;
+    --sidebar-primary-foreground: 222 44% 12%;
+    --sidebar-accent: 142 70% 24%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 142 76% 25%;
-    --sidebar-ring: 158 64% 52%;
+    --sidebar-border: 142 65% 22%;
+    --sidebar-ring: 158 58% 48%;
   }
 
   .dark {
-    /* Dark mode */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 222 42% 11%;
+    --foreground: 210 36% 97%;
 
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 40% 13%;
+    --card-foreground: 210 36% 97%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 42% 11%;
+    --popover-foreground: 210 36% 97%;
 
-    --primary: 142 76% 36%; /* Verde */
+    --primary: 142 65% 42%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 158 64% 52%; /* Verde claro */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 158 52% 44%;
+    --secondary-foreground: 222 40% 11%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 30% 17%;
+    --muted-foreground: 215 18% 62%;
 
-    --accent: 142 76% 36%; /* Verde */
+    --accent: 142 65% 42%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 58% 46%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 174 66% 55%;
+    --border: 217 28% 17%;
+    --input: 217 28% 17%;
+    --ring: 142 55% 48%;
 
-    --sidebar-background: 142 76% 20%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 158 64% 52%; 
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 142 76% 30%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 142 76% 15%;
-    --sidebar-ring: 158 64% 52%;
+    --chart-1: 142 62% 48%;
+    --chart-2: 0 62% 58%;
+    --chart-3: 158 48% 46%;
+    --chart-4: 215 16% 58%;
+    --chart-5: 38 85% 54%;
+
+    --sidebar-background: 142 55% 18%;
+    --sidebar-foreground: 210 36% 97%;
+    --sidebar-primary: 158 52% 44%;
+    --sidebar-primary-foreground: 222 44% 11%;
+    --sidebar-accent: 142 58% 26%;
+    --sidebar-accent-foreground: 210 36% 97%;
+    --sidebar-border: 142 50% 14%;
+    --sidebar-ring: 158 52% 44%;
   }
 }
 
@@ -104,7 +114,11 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--muted) / 0.65) 100%
+    );
     min-height: 100vh;
     width: 100%;
     margin: 0;
@@ -206,13 +220,13 @@
   }
 }
 
-/* Custom hover color */
+/* Hover accent — alinhado a tokens (Sprint 1 DS) */
 .hover\:bg-accent:hover {
-  background-color: #16a34a;
+  background-color: hsl(var(--accent));
 }
 
 .hover\:bg-accent\/80:hover {
-  background-color: rgba(22, 163, 74, 0.8);
+  background-color: hsl(var(--accent) / 0.8);
 }
 
 /* Enhanced card shadows */

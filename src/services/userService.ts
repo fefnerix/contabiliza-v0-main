@@ -92,3 +92,40 @@ export const getUserAchievements = async (): Promise<any[]> => {
     return [];
   }
 };
+
+export const updateUserPreferences = async (
+  preferences: Partial<{
+    language: string;
+    currency: string;
+    country: string;
+    timezone: string;
+  }>
+): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const updateData: Record<string, string> = {};
+    if (preferences.language) updateData.language = preferences.language;
+    if (preferences.currency) updateData.currency = preferences.currency;
+    if (preferences.country) updateData.country = preferences.country;
+    if (preferences.timezone) updateData.timezone = preferences.timezone;
+
+    if (Object.keys(updateData).length === 0) return true;
+
+    const { error } = await supabase
+      .from("poupeja_users")
+      .update(updateData)
+      .eq("id", user.id);
+
+    if (error) {
+      console.error('Error saving preferences:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in updateUserPreferences:', error);
+    return false;
+  }
+};

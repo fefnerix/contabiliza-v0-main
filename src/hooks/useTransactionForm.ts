@@ -21,7 +21,7 @@ export const useTransactionForm = ({
   onComplete, 
   defaultType = 'expense' 
 }: UseTransactionFormProps) => {
-  const { addTransaction, updateTransaction, getTransactions, getGoals } = useAppContext();
+  const { addTransaction, updateTransaction } = useAppContext();
   const { t } = usePreferences();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>(
     initialData?.type || defaultType
@@ -65,9 +65,6 @@ export const useTransactionForm = ({
   };
 
   const onSubmit = async (values: TransactionFormValues) => {
-    console.log("Form submitted with values:", values);
-    console.log("Form validation state:", form.formState);
-    
     // Convert "none" value and null back to undefined for goalId
     const processedValues = {
       ...values,
@@ -76,7 +73,6 @@ export const useTransactionForm = ({
     
     try {
       if (mode === 'create') {
-        console.log("Creating transaction...");
         await addTransaction({
           type: processedValues.type,
           amount: processedValues.amount,
@@ -86,10 +82,7 @@ export const useTransactionForm = ({
           goalId: processedValues.goalId,
           category: '',
         });
-        
-        console.log("Transaction created successfully, refreshing data...");
       } else if (initialData) {
-        console.log("Updating transaction...");
         await updateTransaction(initialData.id, {
           type: processedValues.type,
           amount: processedValues.amount,
@@ -98,13 +91,8 @@ export const useTransactionForm = ({
           date: new Date(processedValues.date).toISOString(),
           goalId: processedValues.goalId,
         });
-        
-        console.log("Transaction updated successfully, refreshing data...");
       }
 
-      // AppContext automatically updates state after add/update operations
-      // No need to manually reload data here
-      console.log("Transaction operation completed successfully");
       onComplete();
     } catch (error) {
       console.error("Error saving transaction:", error);

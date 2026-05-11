@@ -86,7 +86,7 @@ const GoalNavigation: React.FC<GoalNavigationProps> = ({
         <Progress value={progress} className="h-2" />
         
         <div className="flex justify-between mt-2 text-sm">
-          <span className="text-metacash-success">
+          <span className="text-primary">
             {formatCurrency(currentGoal.currentAmount, currency)}
           </span>
           <span className="text-muted-foreground">

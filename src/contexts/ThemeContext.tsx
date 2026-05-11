@@ -24,7 +24,7 @@ const ThemeContext = createContext<ThemeContextType>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "metacash-ui-theme",
+  storageKey = "contabiliza-ui-theme",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(

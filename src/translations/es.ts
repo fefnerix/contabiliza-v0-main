@@ -235,6 +235,13 @@ export default {
   transactions: {
     title: 'Transacciones',
     addTransaction: 'Agregar transacción',
+    edit: {
+      title: 'Editar transacción',
+      description: 'Modifica los datos del registro.',
+      success: '¡Transacción actualizada!',
+      successDesc: 'Los cambios fueron guardados.',
+      error: 'No se pudo actualizar. Intenta de nuevo.',
+    },
     addIncome: 'Agregar ingreso',
     addExpense: 'Agregar gasto',
     editTransaction: 'Editar transacción',
@@ -426,6 +433,8 @@ export default {
     manageNotifications: "Administra tus notificaciones",
     language: 'Idioma',
     currency: 'Moneda',
+    country: 'País',
+    countryHelp: 'Tu zona horaria se actualiza automáticamente',
     theme: 'Tema',
     editProfile: 'Editar perfil',
     logout: 'Cerrar sesión',

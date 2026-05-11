@@ -23,10 +23,10 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onClick, onEdit, onDelete }) 
   
   // Determine progress color
   const getProgressColor = () => {
-    if (progress < 25) return 'bg-metacash-error';
-    if (progress < 50) return 'bg-metacash-warning';
-    if (progress < 75) return 'bg-metacash-blue';
-    return 'bg-metacash-success';
+    if (progress < 25) return 'bg-destructive';
+    if (progress < 50) return 'bg-chart-5';
+    if (progress < 75) return 'bg-chart-3';
+    return 'bg-primary';
   };
   
   return (
