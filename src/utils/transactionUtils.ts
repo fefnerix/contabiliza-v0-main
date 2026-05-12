@@ -1,6 +1,12 @@
 import { Transaction, TimeRange } from '../types';
 import { getIntlLocale } from '@/utils/locale';
 
+/** Valores monetários vindos do Supabase (numeric) chegam como string em runtime. */
+export function toTransactionAmount(amount: unknown): number {
+  const n = Number(amount);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /* ------------------------------------------------------------------ */
 /* Preferências salvas (com fallbacks seguros)                         */
 /* ------------------------------------------------------------------ */
@@ -54,12 +60,21 @@ const getDaysAgoStart = (days: number) => {
 /* Parsing de datas (evita offset de timezone em YYYY-MM-DD)           */
 /* ------------------------------------------------------------------ */
 
-export const createLocalDate = (dateString: string): Date => {
-  if (dateString.includes('-') && dateString.length === 10) {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day); // month é 0-indexado
+/** Data de calendário local (sem deslocar dia por UTC). Aceita YYYY-MM-DD ou ISO com prefixo YYYY-MM-DD. */
+export const createLocalDate = (dateInput: string | Date | null | undefined): Date => {
+  if (dateInput == null) return new Date(NaN);
+  if (dateInput instanceof Date && !Number.isNaN(dateInput.getTime())) {
+    return new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
   }
-  return new Date(dateString);
+  const dateString = String(dateInput);
+  const ymd = dateString.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (ymd) {
+    const [year, month, day] = ymd[1].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return new Date(NaN);
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 };
 
 /* ------------------------------------------------------------------ */
@@ -131,10 +146,14 @@ export const filterTransactionsByTimeRange = (
 /* ------------------------------------------------------------------ */
 
 export const calculateTotalIncome = (transactions: Transaction[]): number =>
-  transactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  transactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + toTransactionAmount(t.amount), 0);
 
 export const calculateTotalExpenses = (transactions: Transaction[]): number =>
-  transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + toTransactionAmount(t.amount), 0);
 
 /* ------------------------------------------------------------------ */
 /* Cálculo mensal                                                      */
@@ -295,10 +314,10 @@ export const calculateCategorySummaries = (
   type: 'income' | 'expense'
 ) => {
   const filtered = transactions.filter((t) => t.type === type);
-  const totalAmount = filtered.reduce((sum, t) => sum + t.amount, 0);
+  const totalAmount = filtered.reduce((sum, t) => sum + toTransactionAmount(t.amount), 0);
 
   const categories = filtered.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
+    acc[t.category] = (acc[t.category] || 0) + toTransactionAmount(t.amount);
     return acc;
   }, {} as Record<string, number>);
 

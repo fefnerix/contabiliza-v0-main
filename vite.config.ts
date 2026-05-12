@@ -8,9 +8,27 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    // true = IPv4 + IPv6; só "::" no Windows pode recusar ligação a http://localhost
+    host: true,
     port: 8080,
   },
+  preview: {
+    host: true,
+    // Mesma porta exposta no Dockerfile / docker-compose (`npm run build && npm run preview`)
+    port: Number(process.env.PREVIEW_PORT) || 4173,
+    strictPort: false,
+  },
+  build:
+    mode === "production"
+      ? {
+          minify: "terser",
+          terserOptions: {
+            compress: {
+              pure_funcs: ["console.log", "console.info", "console.debug"],
+            },
+          },
+        }
+      : {},
   plugins: [
     react(),
     mode === 'development' &&
@@ -49,7 +67,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,ttf,woff,woff2}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB limit
+        // Dev build (`vite build --mode development`) gera bundle maior; precisa caber no precache
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: ({url}) => url.pathname.startsWith('/api'),

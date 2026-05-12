@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScheduledTransaction } from '@/types';
-import { formatCurrency, createLocalDate } from '@/utils/transactionUtils';
+import { formatCurrency, createLocalDate, toTransactionAmount } from '@/utils/transactionUtils';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Calendar, TrendingUp, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
@@ -20,7 +20,7 @@ const FixedExpensesOverview: React.FC<FixedExpensesOverviewProps> = ({ scheduled
   // Calcular total mensal de despesas fixas (pendentes)
   const monthlyTotal = expenses
     .filter(transaction => transaction.recurrence === 'monthly' && transaction.status !== 'paid')
-    .reduce((total, transaction) => total + transaction.amount, 0);
+    .reduce((total, transaction) => total + toTransactionAmount(transaction.amount), 0);
 
   // Calcular total pago neste mês
   const currentMonth = new Date().getMonth();
@@ -31,7 +31,11 @@ const FixedExpensesOverview: React.FC<FixedExpensesOverviewProps> = ({ scheduled
       const paidDate = createLocalDate(transaction.paidDate);
       return paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear;
     })
-    .reduce((total, transaction) => total + (transaction.paidAmount || transaction.amount), 0);
+    .reduce(
+      (total, transaction) =>
+        total + toTransactionAmount(transaction.paidAmount ?? transaction.amount),
+      0
+    );
 
   // Calcular próximos vencimentos (próximos 7 dias)
   const today = new Date();

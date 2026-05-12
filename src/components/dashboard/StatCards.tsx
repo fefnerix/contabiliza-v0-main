@@ -18,8 +18,8 @@ const StatCards: React.FC<StatCardsProps> = ({ transactions }) => {
   const balance = totalIncome - totalExpenses;
   
   // Calculate goal progress percentage (all goals combined)
-  const totalGoalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
-  const totalGoalCurrent = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalGoalTarget = goals.reduce((sum, goal) => sum + Number(goal.targetAmount ?? 0), 0);
+  const totalGoalCurrent = goals.reduce((sum, goal) => sum + Number(goal.currentAmount ?? 0), 0);
   const goalPercentage = totalGoalTarget > 0 
     ? Math.round((totalGoalCurrent / totalGoalTarget) * 100) 
     : 0;

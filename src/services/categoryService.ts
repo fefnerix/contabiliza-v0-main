@@ -5,9 +5,14 @@ import { v4 as uuidv4 } from "uuid";
 
 export const getCategories = async (): Promise<Category[]> => {
   try {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) return [];
+
+    const userId = authData.user.id;
     const { data, error } = await supabase
       .from("poupeja_categories")
       .select("*")
+      .or(`user_id.eq.${userId},user_id.is.null`)
       .order("name");
 
     if (error) throw error;
@@ -28,10 +33,15 @@ export const getCategories = async (): Promise<Category[]> => {
 
 export const getCategoriesByType = async (type: 'income' | 'expense'): Promise<Category[]> => {
   try {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) return [];
+
+    const userId = authData.user.id;
     const { data, error } = await supabase
       .from("poupeja_categories")
       .select("*")
       .eq("type", type)
+      .or(`user_id.eq.${userId},user_id.is.null`)
       .order("name");
 
     if (error) throw error;

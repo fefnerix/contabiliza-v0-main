@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { translateCategoryName } from '@/utils/categoryI18n';
+import { toTransactionAmount } from '@/utils/transactionUtils';
 
 export const generateReportData = (
   transactions: Transaction[],
@@ -78,8 +79,8 @@ export const downloadPDF = (data: Transaction[], companyName?: string): void => 
     doc.text(`Generado el: ${new Date().toLocaleDateString('es-419')}`, 20, 35);
     
     // Calculate totals
-    const totalIncome = data.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = data.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = data.filter(t => t.type === 'income').reduce((sum, t) => sum + toTransactionAmount(t.amount), 0);
+    const totalExpenses = data.filter(t => t.type === 'expense').reduce((sum, t) => sum + toTransactionAmount(t.amount), 0);
     const balance = totalIncome - totalExpenses;
     
     // Add summary
@@ -96,7 +97,7 @@ export const downloadPDF = (data: Transaction[], companyName?: string): void => 
       transaction.type === 'income' ? 'Ingreso' : 'Gasto',
       translateCategoryName(transaction.category, transaction.type, 'es-419'),
       transaction.description,
-      `$ ${transaction.amount.toFixed(2)}`
+      `$ ${toTransactionAmount(transaction.amount).toFixed(2)}`
     ]);
     
     // Create table

@@ -18,9 +18,11 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const {
+    user,
     filteredTransactions,
     transactions,
     setCustomDateRange,
+    setTimeRange,
     goals,
     hideValues,
     toggleHideValues,
@@ -54,6 +56,7 @@ const Index = () => {
   const balance = monthlyData.accumulatedBalance;
   
   useEffect(() => {
+    if (!user?.id) return;
     const loadInitialData = async () => {
       console.log("Dashboard: Loading initial data...");
       try {
@@ -64,21 +67,23 @@ const Index = () => {
       }
     };
     loadInitialData();
-  }, []); // monta uma vez
+  }, [user?.id, getTransactions, getGoals]);
 
   // Atualiza o range quando o mês muda
   useEffect(() => {
     const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
+    setTimeRange('custom');
     setCustomDateRange(firstDay, lastDay);
     console.log("Dashboard: Date range updated for month:", currentMonth.toDateString());
-  }, [currentMonth, setCustomDateRange]);
+  }, [currentMonth, setCustomDateRange, setTimeRange]);
   
   const handleMonthChange = (date: Date) => {
     console.log("Dashboard: Month changed to:", date.toDateString());
     setCurrentMonth(date);
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+    setTimeRange('custom');
     setCustomDateRange(firstDay, lastDay);
   };
   

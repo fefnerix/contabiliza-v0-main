@@ -1,9 +1,13 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState, useMemo, useCallback, useRef } from 'react';
+import type { AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Transaction, Goal, ScheduledTransaction } from '@/types';
 import { setupAuthListener, getCurrentSession } from '@/services/authService';
-import { recalculateGoalAmounts as recalculateGoalAmountsService } from '@/services/goalService';
-import { createLocalDate } from '@/utils/transactionUtils';
+import {
+  getGoals as fetchGoalsFromService,
+  recalculateGoalAmounts as recalculateGoalAmountsService,
+} from '@/services/goalService';
+import { createLocalDate, toTransactionAmount } from '@/utils/transactionUtils';
 
 // Use database types directly from Supabase
 interface Category {
@@ -205,6 +209,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(isInitialized);
+  const userIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    isInitializedRef.current = isInitialized;
+  }, [isInitialized]);
+
+  useEffect(() => {
+    userIdRef.current = state.user?.id ?? null;
+  }, [state.user?.id]);
+
+  /** Evita várias chamadas paralelas a getTransactions() quando o Realtime dispara * em rajada. */
+  const realtimeTransactionsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper function to get current user with better error handling
   const getCurrentUser = async () => {
@@ -225,7 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return {
       id: dbTransaction.id,
       type: dbTransaction.type as 'income' | 'expense',
-      amount: dbTransaction.amount,
+      amount: toTransactionAmount(dbTransaction.amount),
       category: dbTransaction.category?.name || 'Unknown',
       categoryIcon: dbTransaction.category?.icon || 'circle',
       categoryColor: dbTransaction.category?.color || '#607D8B',
@@ -295,59 +312,66 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Filter transactions based on time range
-  const filterTransactionsByTimeRange = (transactions: Transaction[]) => {
-    const userTimezone = localStorage.getItem('userTimezone') || 'America/Sao_Paulo';
-    const now = new Date();
-    const todayString = new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(now);
-    const today = createLocalDate(todayString);
-    
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-    
-    if (state.timeRange === 'custom' && state.customStartDate && state.customEndDate) {
-      startDate = state.customStartDate;
-      endDate = state.customEndDate;
-    } else {
-      switch (state.timeRange) {
-        case 'today':
-          startDate = today;
-          endDate = today;
-          break;
-        case 'yesterday':
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          startDate = yesterday;
-          endDate = yesterday;
-          break;
-        case '7days':
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-          startDate = sevenDaysAgo;
-          endDate = today;
-          break;
-        case '14days':
-          const fourteenDaysAgo = new Date(today);
-          fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
-          startDate = fourteenDaysAgo;
-          endDate = today;
-          break;
-        case '30days':
-        default:
-          const thirtyDaysAgo = new Date(today);
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-          startDate = thirtyDaysAgo;
-          endDate = today;
-          break;
+  const filterTransactionsByTimeRange = useCallback(
+    (transactions: Transaction[]) => {
+      const userTimezone = localStorage.getItem('userTimezone') || 'America/Sao_Paulo';
+      const now = new Date();
+      const todayString = new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(now);
+      const today = createLocalDate(todayString);
+
+      let startDate: Date | null = null;
+      let endDate: Date | null = null;
+
+      if (state.timeRange === 'custom' && state.customStartDate && state.customEndDate) {
+        startDate = state.customStartDate;
+        endDate = state.customEndDate;
+      } else {
+        switch (state.timeRange) {
+          case 'today':
+            startDate = today;
+            endDate = today;
+            break;
+          case 'yesterday': {
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            startDate = yesterday;
+            endDate = yesterday;
+            break;
+          }
+          case '7days': {
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+            startDate = sevenDaysAgo;
+            endDate = today;
+            break;
+          }
+          case '14days': {
+            const fourteenDaysAgo = new Date(today);
+            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+            startDate = fourteenDaysAgo;
+            endDate = today;
+            break;
+          }
+          case '30days':
+          default: {
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+            startDate = thirtyDaysAgo;
+            endDate = today;
+            break;
+          }
+        }
       }
-    }
-    
-    if (!startDate || !endDate) return transactions;
-    
-    return transactions.filter(transaction => {
-      const transactionDateOnly = createLocalDate(transaction.date);
-      return transactionDateOnly >= startDate && transactionDateOnly <= endDate;
-    });
-  };
+
+      if (!startDate || !endDate) return transactions;
+
+      return transactions.filter((transaction) => {
+        const transactionDateOnly = createLocalDate(transaction.date);
+        return transactionDateOnly >= startDate && transactionDateOnly <= endDate;
+      });
+    },
+    [state.timeRange, state.customStartDate, state.customEndDate]
+  );
 
   // Update filtered transactions when transactions or time range changes
   useEffect(() => {
@@ -366,7 +390,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // });
     
     dispatch({ type: 'SET_FILTERED_TRANSACTIONS', payload: filtered });
-  }, [state.transactions, state.timeRange, state.customStartDate, state.customEndDate]);
+  }, [state.transactions, filterTransactionsByTimeRange]);
 
   // Setup auth state listener and initial session check
   useEffect(() => {
@@ -374,25 +398,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // console.log('AppContext: Setting up auth listener and checking session');
     
-    const handleAuthChange = async (session: any) => {
+    const handleAuthChange = async (event: AuthChangeEvent, session: any) => {
       if (!mounted) return;
-      
-      // console.log('AppContext: Auth state changed', { 
-      //   hasSession: !!session, 
-      //   userEmail: session?.user?.email,
-      //   userId: session?.user?.id 
-      // });
-      
+
       if (session?.user) {
         dispatch({ type: 'SET_USER', payload: session.user });
-        
-        // Only load data if we haven't initialized yet or user changed
-        if (!isInitialized || state.user?.id !== session.user.id) {
-          // console.log('AppContext: Loading user data for:', session.user.email);
+
+        if (event === 'TOKEN_REFRESHED') {
+          return;
+        }
+
+        if (!isInitializedRef.current || userIdRef.current !== session.user.id) {
           await loadUserData(session.user);
         }
       } else {
-        // console.log('AppContext: No session, clearing user data');
         dispatch({ type: 'SET_USER', payload: null });
         dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
         dispatch({ type: 'SET_CATEGORIES', payload: [] });
@@ -403,8 +422,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = setupAuthListener(handleAuthChange);
+    const { data: { subscription } } = setupAuthListener((event, session) => {
+      void handleAuthChange(event, session);
+    });
 
     // Check for existing session
     const checkInitialSession = async () => {
@@ -413,11 +433,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const session = await getCurrentSession();
         
         if (session?.user) {
-          // console.log('AppContext: Found existing session for:', session.user.email);
-          await handleAuthChange(session);
+          await handleAuthChange('INITIAL_SESSION', session);
         } else {
-          // console.log('AppContext: No existing session found');
-          await handleAuthChange(null);
+          await handleAuthChange('INITIAL_SESSION', null);
         }
       } catch (error) {
         console.error('AppContext: Error during initialization:', error);
@@ -463,7 +481,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           `)
           .eq('user_id', user.id)
           .order('date', { ascending: false }),
-        supabase.from('poupeja_categories').select('*').eq('user_id', user.id),
+        supabase.from('poupeja_categories').select('*').or(`user_id.eq.${user.id},user_id.is.null`),
         supabase.from('poupeja_goals').select('*').eq('user_id', user.id),
         supabase.from('poupeja_scheduled_transactions')
           .select(`
@@ -576,36 +594,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           filter: `user_id=eq.${state.user.id}`,
         },
         () => {
-          void getTransactions();
+          if (realtimeTransactionsTimerRef.current) {
+            clearTimeout(realtimeTransactionsTimerRef.current);
+          }
+          realtimeTransactionsTimerRef.current = setTimeout(() => {
+            realtimeTransactionsTimerRef.current = null;
+            void getTransactions();
+          }, 500);
         }
       )
       .subscribe();
 
     return () => {
+      if (realtimeTransactionsTimerRef.current) {
+        clearTimeout(realtimeTransactionsTimerRef.current);
+        realtimeTransactionsTimerRef.current = null;
+      }
       void supabase.removeChannel(channel);
     };
-  }, [state.user?.id]);
+  }, [state.user?.id, getTransactions]);
 
   const getGoals = useCallback(async (): Promise<Goal[]> => {
     try {
-      console.log('AppContext: Fetching goals...');
-      const user = await getCurrentUser();
-      const { data, error } = await supabase
-        .from('poupeja_goals')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      
-      const goals = (data || []).map(transformGoal);
-      console.log('AppContext: Goals fetched successfully:', goals.length);
+      const goals = await fetchGoalsFromService();
       dispatch({ type: 'SET_GOALS', payload: goals });
       return goals;
     } catch (error) {
       console.error('Error fetching goals:', error);
       throw error;
     }
-  }, []); // Empty dependencies as this function is self-contained
+  }, []);
 
   const recalculateGoalAmounts = async (): Promise<boolean> => {
     try {

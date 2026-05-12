@@ -7,43 +7,48 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, ArrowRight } from 'lucide-react';
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
   feature?: string;
 }
 
-const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ 
-  children, 
-  feature: featureProp 
+const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
+  children,
+  feature: featureProp
 }) => {
   const { subscription, isLoading } = useSubscription();
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { companyName } = useBrandingConfig();
   const { t } = usePreferences();
   const feature = featureProp ?? t('subscription.defaultFeature');
-  
+
   // Verificar se a assinatura está dentro do período válido
   const isSubscriptionValid = React.useMemo(() => {
     if (!subscription || subscription.status !== 'active') {
       return false;
     }
-    
+
     // Verificar se current_period_end existe e se a data atual está dentro do período
     if (subscription.current_period_end) {
       const currentDate = new Date();
       const periodEndDate = new Date(subscription.current_period_end);
-      
+
       // Se a data atual for maior que a data de fim do período, a assinatura expirou
       if (currentDate > periodEndDate) {
         return false;
       }
     }
-    
+
     return true;
   }, [subscription]);
 
-  if (isLoading) {
+  // Admins: acesso ao dashboard sem assinatura ativa (evita bloqueio indevido).
+  if (isAdmin) return <>{children}</>;
+
+  if (isLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

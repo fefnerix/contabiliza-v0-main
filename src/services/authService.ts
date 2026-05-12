@@ -1,3 +1,4 @@
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 // Rate limiting for login attempts
@@ -187,15 +188,10 @@ export const getCurrentSession = async () => {
   }
 };
 
-export const setupAuthListener = (callback: (session: any) => void) => {
-  // console.log("AuthService: Setting up auth state listener");
-  
+export const setupAuthListener = (
+  callback: (event: AuthChangeEvent, session: Session | null) => void
+) => {
   return supabase.auth.onAuthStateChange((event, session) => {
-    // console.log("AuthService: Auth state change event:", event);
-    // console.log("AuthService: Session in event:", !!session);
-    // console.log("AuthService: User in session:", session?.user?.email || 'no user');
-    
-    // Call the callback immediately without setTimeout for faster response
-    callback(session);
+    callback(event, session);
   });
 };

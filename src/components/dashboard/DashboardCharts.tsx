@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { formatCurrency, createLocalDate } from '@/utils/transactionUtils';
+import { formatCurrency, createLocalDate, toTransactionAmount } from '@/utils/transactionUtils';
 import { useAppContext } from '@/contexts/AppContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { calculateCategorySummaries } from '@/utils/transactionUtils';
@@ -52,9 +52,9 @@ const generateChartData = (transactions: any[], month: Date) => {
     };
     
     if (transaction.type === 'income') {
-      dayData.income += transaction.amount;
+      dayData.income += toTransactionAmount(transaction.amount);
     } else {
-      dayData.expenses += transaction.amount;
+      dayData.expenses += toTransactionAmount(transaction.amount);
     }
     
     transactionsByDay.set(day, dayData);

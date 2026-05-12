@@ -1,47 +1,54 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Goal, Transaction } from "@/types";
+import { Goal } from "@/types";
 import { v4 as uuidv4 } from "uuid";
+import { toTransactionAmount } from "@/utils/transactionUtils";
 
 export const getGoals = async (): Promise<Goal[]> => {
   try {
-    console.log("Iniciando búsqueda de metas...");
     const { data: authData } = await supabase.auth.getUser();
     if (!authData?.user) {
-      console.log("Usuario no autenticado");
       return [];
     }
 
     const userId = authData.user.id;
-    console.log("Buscando metas para el usuario autenticado");
 
-    const { data, error } = await supabase
+    const { data: goalsData, error: goalsError } = await supabase
       .from("poupeja_goals")
       .select("*")
       .eq("user_id", userId);
 
-    if (error) {
-      console.error("Error al buscar metas:", error);
-      throw error;
+    if (goalsError) {
+      console.error("Error al buscar metas:", goalsError);
+      throw goalsError;
     }
 
-    console.log("Metas encontradas en la base de datos:", data);
+    if (!goalsData?.length) {
+      return [];
+    }
 
-    const goals: Goal[] = [];
+    const goalIds = goalsData.map((g) => g.id);
+    const { data: txData, error: txError } = await supabase
+      .from("poupeja_transactions")
+      .select("*, category:poupeja_categories(name, color, icon)")
+      .in("goal_id", goalIds);
 
-    for (const goalData of data) {
-      console.log(`Procesando meta ${goalData.id}: ${goalData.name}`);
-      console.log(`Valores de la meta en la base de datos: target_amount=${goalData.target_amount}, current_amount=${goalData.current_amount}`);
+    if (txError) {
+      console.error("Error al buscar transacciones de metas:", txError);
+      throw txError;
+    }
 
-      // Buscar transacciones relacionadas a la meta
-      const { data: transactions } = await supabase
-        .from("poupeja_transactions")
-        .select("*, category:poupeja_categories(name, color, icon)")
-        .eq("goal_id", goalData.id);
+    const byGoalId = new Map<string, any[]>();
+    for (const row of txData || []) {
+      const gid = row.goal_id as string | null;
+      if (!gid) continue;
+      if (!byGoalId.has(gid)) byGoalId.set(gid, []);
+      byGoalId.get(gid)!.push(row);
+    }
 
-      console.log(`Encontradas ${transactions ? transactions.length : 0} transacciones para la meta ${goalData.id}`);
-
-      goals.push({
+    return goalsData.map((goalData) => {
+      const transactions = byGoalId.get(goalData.id) ?? [];
+      return {
         id: goalData.id,
         name: goalData.name,
         targetAmount: goalData.target_amount,
@@ -50,22 +57,30 @@ export const getGoals = async (): Promise<Goal[]> => {
         endDate: goalData.end_date,
         deadline: goalData.deadline,
         color: goalData.color,
-        transactions: transactions ? transactions.map((t) => ({
+        target_amount: goalData.target_amount,
+        current_amount: goalData.current_amount,
+        start_date: goalData.start_date,
+        end_date: goalData.end_date,
+        user_id: goalData.user_id ?? undefined,
+        created_at: goalData.created_at ?? undefined,
+        updated_at: goalData.updated_at ?? undefined,
+        transactions: transactions.map((t) => ({
           id: t.id,
-          type: t.type as 'income' | 'expense',
-          amount: t.amount,
+          type: t.type as "income" | "expense",
+          amount: toTransactionAmount(t.amount),
           category: t.category ? t.category.name : "Outros",
           categoryColor: t.category ? t.category.color : "#9E9E9E",
           categoryIcon: t.category ? t.category.icon : "grid",
           description: t.description || "",
           date: t.date,
-          goalId: t.goal_id
-        })) : []
-      });
-    }
-
-    console.log("Metas procesadas y listas para retorno:", goals);
-    return goals;
+          goalId: t.goal_id,
+          category_id: t.category_id,
+          goal_id: t.goal_id,
+          user_id: t.user_id,
+          created_at: t.created_at,
+        })),
+      };
+    });
   } catch (error) {
     console.error("Error al buscar metas:", error);
     return [];
@@ -74,10 +89,8 @@ export const getGoals = async (): Promise<Goal[]> => {
 
 export const addGoal = async (goal: Omit<Goal, "id" | "transactions">): Promise<Goal | null> => {
   try {
-    console.log("Adding goal:", goal);
     const newId = uuidv4();
-    
-    // Get the current user
+
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
@@ -96,7 +109,7 @@ export const addGoal = async (goal: Omit<Goal, "id" | "transactions">): Promise<
         end_date: goal.endDate,
         deadline: goal.deadline,
         color: goal.color || "#06465f",
-        user_id: session.user.id
+        user_id: session.user.id,
       })
       .select()
       .single();
@@ -105,8 +118,6 @@ export const addGoal = async (goal: Omit<Goal, "id" | "transactions">): Promise<
       console.error("Error en addGoal:", error);
       throw error;
     }
-
-    console.log("Goal added:", data);
 
     return {
       id: data.id,
@@ -117,7 +128,7 @@ export const addGoal = async (goal: Omit<Goal, "id" | "transactions">): Promise<
       endDate: data.end_date,
       deadline: data.deadline,
       color: data.color,
-      transactions: []
+      transactions: [],
     };
   } catch (error) {
     console.error("Error adding goal:", error);
@@ -136,15 +147,18 @@ export const updateGoal = async (goal: Omit<Goal, "transactions">): Promise<Goal
         start_date: goal.startDate,
         end_date: goal.endDate,
         deadline: goal.deadline,
-        color: goal.color
+        color: goal.color,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", goal.id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error en updateGoal:", error);
+      throw error;
+    }
 
-    // Fetch the related transactions
     const { data: transactions } = await supabase
       .from("poupeja_transactions")
       .select("*, category:poupeja_categories(name, color, icon)")
@@ -159,17 +173,19 @@ export const updateGoal = async (goal: Omit<Goal, "transactions">): Promise<Goal
       endDate: data.end_date,
       deadline: data.deadline,
       color: data.color,
-      transactions: transactions ? transactions.map((t) => ({
-        id: t.id,
-        type: t.type as 'income' | 'expense',
-        amount: t.amount,
-        category: t.category ? t.category.name : "Outros",
-        categoryColor: t.category ? t.category.color : "#9E9E9E",
-        categoryIcon: t.category ? t.category.icon : "grid",
-        description: t.description || "",
-        date: t.date,
-        goalId: t.goal_id
-      })) : []
+      transactions: transactions
+        ? transactions.map((t) => ({
+            id: t.id,
+            type: t.type as "income" | "expense",
+            amount: toTransactionAmount(t.amount),
+            category: t.category ? t.category.name : "Outros",
+            categoryColor: t.category ? t.category.color : "#9E9E9E",
+            categoryIcon: t.category ? t.category.icon : "grid",
+            description: t.description || "",
+            date: t.date,
+            goalId: t.goal_id,
+          }))
+        : [],
     };
   } catch (error) {
     console.error("Error actualizando meta:", error);
@@ -179,18 +195,14 @@ export const updateGoal = async (goal: Omit<Goal, "transactions">): Promise<Goal
 
 export const deleteGoal = async (id: string): Promise<boolean> => {
   try {
-    // Actualizar transacciones para remover la referencia a la meta
-    await supabase
-      .from("poupeja_transactions")
-      .update({ goal_id: null })
-      .eq("goal_id", id);
-    
-    const { error } = await supabase
-      .from("poupeja_goals")
-      .delete()
-      .eq("id", id);
+    await supabase.from("poupeja_transactions").update({ goal_id: null }).eq("goal_id", id);
 
-    if (error) throw error;
+    const { error } = await supabase.from("poupeja_goals").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error eliminando meta:", error);
+      throw error;
+    }
 
     return true;
   } catch (error) {
@@ -199,22 +211,18 @@ export const deleteGoal = async (id: string): Promise<boolean> => {
   }
 };
 
-// Adicionar esta função ao arquivo goalService.ts
 export const recalculateGoalAmounts = async (): Promise<boolean> => {
   try {
-    console.log("Recalculando valores de las metas...");
     const { data: authData } = await supabase.auth.getUser();
     if (!authData?.user) {
-      console.log("Usuario no autenticado");
       return false;
     }
 
     const userId = authData.user.id;
-    
-    // Buscar todas las metas del usuario
+
     const { data: goals, error: goalsError } = await supabase
       .from("poupeja_goals")
-      .select("id, name")
+      .select("id, name, current_amount")
       .eq("user_id", userId);
 
     if (goalsError) {
@@ -222,11 +230,7 @@ export const recalculateGoalAmounts = async (): Promise<boolean> => {
       return false;
     }
 
-    // Para cada meta, calcular o valor atual com base nas transações
-    for (const goal of goals) {
-      console.log(`Recalculando valor para meta ${goal.id}: ${goal.name}`);
-      
-      // Buscar todas las transacciones de ingreso vinculadas a la meta
+    for (const goal of goals || []) {
       const { data: transactions, error: transactionsError } = await supabase
         .from("poupeja_transactions")
         .select("amount")
@@ -238,20 +242,23 @@ export const recalculateGoalAmounts = async (): Promise<boolean> => {
         continue;
       }
 
-      // Calcular el valor total de las transacciones
-      const currentAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
-      console.log(`Valor calculado para meta ${goal.id}: ${currentAmount}`);
+      const newTotal = (transactions || []).reduce(
+        (sum, t) => sum + toTransactionAmount(t.amount),
+        0
+      );
 
-      // Actualizar el valor actual de la meta en la base de datos
-      const { error: updateError } = await supabase
-        .from("poupeja_goals")
-        .update({ current_amount: currentAmount })
-        .eq("id", goal.id);
+      const stored = toTransactionAmount(goal.current_amount);
+      const delta = newTotal - stored;
 
-      if (updateError) {
-        console.error(`Error al actualizar valor de la meta ${goal.id}:`, updateError);
-      } else {
-        console.log(`Meta ${goal.id} actualizada con éxito!`);
+      if (Math.abs(delta) < 1e-9) continue;
+
+      const { error: rpcError } = await supabase.rpc("update_goal_amount", {
+        p_goal_id: goal.id,
+        p_amount_change: delta,
+      });
+
+      if (rpcError) {
+        console.error(`Error RPC update_goal_amount meta ${goal.id}:`, rpcError);
       }
     }
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Clock, Calendar, ChevronRight } from 'lucide-react';
 import { ScheduledTransaction } from '@/types';
-import { formatCurrency } from '@/utils/transactionUtils';
+import { formatCurrency, toTransactionAmount } from '@/utils/transactionUtils';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -63,7 +63,7 @@ const UpcomingExpensesAlert: React.FC<UpcomingExpensesAlertProps> = ({
     ...categorizedExpenses.overdue,
     ...categorizedExpenses.dueToday,
     ...categorizedExpenses.dueSoon
-  ].reduce((sum, transaction) => sum + transaction.amount, 0);
+  ].reduce((sum, transaction) => sum + toTransactionAmount(transaction.amount), 0);
 
   const getUrgencyData = () => {
     if (categorizedExpenses.overdue.length > 0) {

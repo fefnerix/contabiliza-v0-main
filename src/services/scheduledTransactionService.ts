@@ -3,6 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScheduledTransaction } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
+function getStoredUserTimezone(): string {
+  if (typeof window === "undefined") return "America/Sao_Paulo";
+  try {
+    return localStorage.getItem("userTimezone") || "America/Sao_Paulo";
+  } catch {
+    return "America/Sao_Paulo";
+  }
+}
+
+/** YYYY-MM-DD no fuso do utilizador (colunas DATE no Postgres). */
+function formatDateForDb(date: Date, timeZone = getStoredUserTimezone()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
+}
+
 export const getScheduledTransactions = async (): Promise<ScheduledTransaction[]> => {
   try {
     const { data, error } = await supabase
@@ -213,8 +227,12 @@ export const markAsPaid = async (
 
     if (fetchError) throw fetchError;
 
-    const actualPaidAmount = paidAmount || scheduledTransaction.amount;
-    const now = new Date().toISOString();
+    const tz = getStoredUserTimezone();
+    const todayDate = formatDateForDb(new Date(), tz);
+    const updatedAt = new Date().toISOString();
+
+    const actualPaidAmount =
+      paidAmount != null ? Number(paidAmount) : Number(scheduledTransaction.amount ?? 0);
 
     // Create a real transaction
     const { error: transactionError } = await supabase
@@ -222,10 +240,10 @@ export const markAsPaid = async (
       .insert({
         user_id: session.user.id,
         type: scheduledTransaction.type,
-        amount: actualPaidAmount,
+        amount: Number.isFinite(actualPaidAmount) ? actualPaidAmount : 0,
         category_id: scheduledTransaction.category_id,
         description: `${scheduledTransaction.description} (Agendado)`,
-        date: now,
+        date: todayDate,
         goal_id: scheduledTransaction.goal_id
       });
 
@@ -236,10 +254,10 @@ export const markAsPaid = async (
       .from("poupeja_scheduled_transactions")
       .update({
         status: 'paid',
-        paid_date: now,
-        paid_amount: actualPaidAmount,
-        last_execution_date: now,
-        updated_at: now
+        paid_date: todayDate,
+        paid_amount: Number.isFinite(actualPaidAmount) ? actualPaidAmount : 0,
+        last_execution_date: todayDate,
+        updated_at: updatedAt
       })
       .eq("id", transactionId);
 
@@ -265,7 +283,7 @@ export const markAsPaid = async (
           break;
       }
 
-      const nextExecutionDate = currentDate.toISOString();
+      const nextExecutionDate = formatDateForDb(currentDate, tz);
 
       // Create new scheduled transaction for next occurrence
       const { error: nextTransactionError } = await supabase
@@ -273,7 +291,7 @@ export const markAsPaid = async (
         .insert({
           user_id: session.user.id,
           type: scheduledTransaction.type,
-          amount: scheduledTransaction.amount,
+          amount: Number(scheduledTransaction.amount ?? 0),
           category_id: scheduledTransaction.category_id,
           description: scheduledTransaction.description,
           scheduled_date: nextExecutionDate,

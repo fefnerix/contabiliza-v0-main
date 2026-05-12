@@ -28,7 +28,7 @@ const ExpensesPage = () => {
     const categoryMap = new Map();
     expenses.forEach(expense => {
       const current = categoryMap.get(expense.category) || 0;
-      categoryMap.set(expense.category, current + expense.amount);
+      categoryMap.set(expense.category, current + Number(expense.amount ?? 0));
     });
     
     return Array.from(categoryMap.entries()).map(([name, value]) => ({
