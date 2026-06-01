@@ -10,6 +10,7 @@ import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { SupabaseInitializer } from "@/components/common/SupabaseInitializer";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -48,70 +49,72 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="contabiliza-ui-theme">
-        <TooltipProvider>
-          <BrandingProvider>
-            <PreferencesProvider>
-              <SubscriptionProvider>
-                <AppProvider>
-                  <SupabaseInitializer>
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/dashboard" element={<Index />} />
-                        <Route path="/landing" element={<LandingPage />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/register" element={<RegisterPage />} />
-                        <Route path="/register/:planType" element={<RegisterWithPlanPage />} />
-                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                        <Route path="/reset-password" element={<ResetPasswordPage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/transactions" element={<TransactionsPage />} />
-                        <Route path="/expenses" element={<ExpensesPage />} />
-                        <Route path="/goals" element={<GoalsPage />} />
-                        <Route path="/reports" element={<ReportsPage />} />
-                        <Route path="/schedule" element={<SchedulePage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/categories" element={<CategoriesPage />} />
-                        <Route path="/plans" element={<PlansPage />} />
-                        <Route path="/checkout/:planType" element={<CheckoutPage />} />
-                        <Route path="/payment-success" element={<PaymentSuccessPage />} />
-                        <Route path="/thank-you" element={<ThankYouPage />} />
-                        <Route path="/achievements" element={<AchievementsPage />} />
-                        <Route
-                          path="/admin"
-                          element={
-                            <AdminRoute>
-                              <AdminLayout />
-                            </AdminRoute>
-                          }
-                        >
-                          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                          <Route path="dashboard" element={<AdminDashboardPage />} />
-                          <Route path="customers" element={<AdminCustomersPage />} />
-                          <Route path="analytics" element={<AdminAnalyticsPage />} />
-                          <Route path="plans" element={<AdminPlansPage />} />
-                          <Route path="checkouts" element={<AdminCheckoutsPage />} />
-                          <Route path="communications" element={<AdminCommunicationsPage />} />
-                          <Route path="content" element={<AdminContentPage />} />
-                          <Route path="settings" element={<AdminSettingsPage />} />
-                          <Route path="logs" element={<AdminLogsPage />} />
-                          <Route path="audit" element={<AdminAuditPage />} />
-                        </Route>
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                    <Toaster />
-                    <Sonner />
-                  </SupabaseInitializer>
-                </AppProvider>
-              </SubscriptionProvider>
-            </PreferencesProvider>
-          </BrandingProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="contabiliza-ui-theme">
+          <TooltipProvider>
+            <BrandingProvider>
+              <PreferencesProvider>
+                <SubscriptionProvider>
+                  <AppProvider>
+                    <SupabaseInitializer>
+                      <BrowserRouter>
+                        <Routes>
+                          <Route path="/" element={<LandingPage />} />
+                          <Route path="/dashboard" element={<Index />} />
+                          <Route path="/landing" element={<LandingPage />} />
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route path="/register" element={<RegisterPage />} />
+                          <Route path="/register/:planType" element={<RegisterWithPlanPage />} />
+                          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                          <Route path="/reset-password" element={<ResetPasswordPage />} />
+                          <Route path="/profile" element={<ProfilePage />} />
+                          <Route path="/transactions" element={<TransactionsPage />} />
+                          <Route path="/expenses" element={<ExpensesPage />} />
+                          <Route path="/goals" element={<GoalsPage />} />
+                          <Route path="/reports" element={<ReportsPage />} />
+                          <Route path="/schedule" element={<SchedulePage />} />
+                          <Route path="/settings" element={<SettingsPage />} />
+                          <Route path="/categories" element={<CategoriesPage />} />
+                          <Route path="/plans" element={<PlansPage />} />
+                          <Route path="/checkout/:planType" element={<CheckoutPage />} />
+                          <Route path="/payment-success" element={<PaymentSuccessPage />} />
+                          <Route path="/thank-you" element={<ThankYouPage />} />
+                          <Route path="/achievements" element={<AchievementsPage />} />
+                          <Route
+                            path="/admin"
+                            element={
+                              <AdminRoute>
+                                <AdminLayout />
+                              </AdminRoute>
+                            }
+                          >
+                            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                            <Route path="dashboard" element={<AdminDashboardPage />} />
+                            <Route path="customers" element={<AdminCustomersPage />} />
+                            <Route path="analytics" element={<AdminAnalyticsPage />} />
+                            <Route path="plans" element={<AdminPlansPage />} />
+                            <Route path="checkouts" element={<AdminCheckoutsPage />} />
+                            <Route path="communications" element={<AdminCommunicationsPage />} />
+                            <Route path="content" element={<AdminContentPage />} />
+                            <Route path="settings" element={<AdminSettingsPage />} />
+                            <Route path="logs" element={<AdminLogsPage />} />
+                            <Route path="audit" element={<AdminAuditPage />} />
+                          </Route>
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </BrowserRouter>
+                      <Toaster />
+                      <Sonner />
+                    </SupabaseInitializer>
+                  </AppProvider>
+                </SubscriptionProvider>
+              </PreferencesProvider>
+            </BrandingProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 

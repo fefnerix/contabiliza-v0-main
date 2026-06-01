@@ -1,3 +1,5 @@
+import { withTimeout } from "@/utils/withTimeout";
+
 interface CachedBranding {
   logoUrl: string;
   companyName: string;
@@ -8,6 +10,8 @@ interface CachedBranding {
 
 const CACHE_KEY = 'app_branding_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const PUBLIC_SETTINGS_TIMEOUT_MS = 12_000;
+const LOGO_PRELOAD_TIMEOUT_MS = 8_000;
 
 export class BrandingPreloader {
   private static instance: BrandingPreloader;
@@ -50,14 +54,22 @@ export class BrandingPreloader {
     }
   }
 
-  // Pre-carregar imagem
+  /** Evita await infinito se a URL da logo nunca dispara onload/onerror. */
   private preloadImage(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = () => reject();
-      img.src = url;
-    });
+    const trimmed = url?.trim();
+    if (!trimmed) return Promise.resolve();
+    return withTimeout(
+      new Promise<void>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("logo preload failed"));
+        img.src = trimmed;
+      }),
+      LOGO_PRELOAD_TIMEOUT_MS
+    ).then(
+      () => {},
+      () => {}
+    );
   }
 
   // Carregar branding de forma otimizada
@@ -83,8 +95,19 @@ export class BrandingPreloader {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { data, error } = await supabase.functions.invoke('get-public-settings');
-      
+      let data: Awaited<ReturnType<typeof supabase.functions.invoke>>["data"];
+      let error: Awaited<ReturnType<typeof supabase.functions.invoke>>["error"];
+      try {
+        const result = await withTimeout(
+          supabase.functions.invoke("get-public-settings"),
+          PUBLIC_SETTINGS_TIMEOUT_MS
+        );
+        data = result.data;
+        error = result.error;
+      } catch {
+        return null;
+      }
+
       if (error || !data?.success || !data?.settings) {
         return null;
       }

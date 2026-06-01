@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { brandingPreloader } from '@/utils/brandingPreloader';
+import { withTimeout } from '@/utils/withTimeout';
+
+const BRANDING_LOAD_TOTAL_TIMEOUT_MS = 22_000;
 
 interface BrandingData {
   companyName: string;
@@ -60,7 +62,10 @@ export const BrandingProvider: React.FC<{ children: ReactNode }> = ({ children }
         brandingPreloader.invalidateCache();
       }
       
-      const cachedBranding = await brandingPreloader.loadBranding();
+      const cachedBranding = await withTimeout(
+        brandingPreloader.loadBranding(),
+        BRANDING_LOAD_TOTAL_TIMEOUT_MS
+      ).catch(() => null);
       
       if (cachedBranding) {
         const newBranding: BrandingData = {

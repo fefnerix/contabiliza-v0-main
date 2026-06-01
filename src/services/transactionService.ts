@@ -20,7 +20,8 @@ export const getTransactions = async (): Promise<Transaction[]> => {
         *,
         category:poupeja_categories(id, name, icon, color, type)
       `)
-      .order("date", { ascending: false });
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 

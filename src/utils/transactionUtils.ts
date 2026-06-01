@@ -168,14 +168,6 @@ export const calculateMonthlyFinancialData = (
   const selectedMonthStart = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
   const selectedMonthEnd = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
 
-  console.log('calculateMonthlyFinancialData:', {
-    selectedMonth: selectedMonth.toDateString(),
-    currentMonth: currentMonth.toDateString(),
-    selectedMonthStart: selectedMonthStart.toDateString(),
-    selectedMonthEnd: selectedMonthEnd.toDateString(),
-    totalTransactions: allTransactions.length
-  });
-
   // Apenas as transações do mês selecionado
   const monthTransactions = allTransactions.filter((transaction) => {
     const d = createLocalDate(transaction.date);
@@ -195,7 +187,6 @@ export const calculateMonthlyFinancialData = (
     });
     accumulatedBalance =
       calculateTotalIncome(upToSelected) - calculateTotalExpenses(upToSelected);
-    console.log('Previous month calculation:', { transactionsCount: upToSelected.length, balance: accumulatedBalance });
   } else if (selectedMonthStart.getTime() === currentMonth.getTime()) {
     // saldo acumulado até hoje
     const currentDateEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -205,7 +196,6 @@ export const calculateMonthlyFinancialData = (
     });
     accumulatedBalance =
       calculateTotalIncome(upToCurrent) - calculateTotalExpenses(upToCurrent);
-    console.log('Current month calculation:', { transactionsCount: upToCurrent.length, balance: accumulatedBalance });
   } else {
     // meses futuros: usa saldo atual
     const currentDateEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -215,7 +205,6 @@ export const calculateMonthlyFinancialData = (
     });
     accumulatedBalance =
       calculateTotalIncome(upToCurrent) - calculateTotalExpenses(upToCurrent);
-    console.log('Future month calculation:', { transactionsCount: upToCurrent.length, balance: accumulatedBalance });
   }
 
   const result = {
@@ -225,7 +214,6 @@ export const calculateMonthlyFinancialData = (
     monthTransactions,
   };
 
-  console.log('Final monthly calculation result:', result);
   return result;
 };
 

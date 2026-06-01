@@ -480,7 +480,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             category:poupeja_categories(id, name, icon, color, type)
           `)
           .eq('user_id', user.id)
-          .order('date', { ascending: false }),
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false }),
         supabase.from('poupeja_categories').select('*').or(`user_id.eq.${user.id},user_id.is.null`),
         supabase.from('poupeja_goals').select('*').eq('user_id', user.id),
         supabase.from('poupeja_scheduled_transactions')
@@ -566,7 +567,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           category:poupeja_categories(id, name, icon, color, type)
         `)
         .eq('user_id', user.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
   
       if (error) throw error;
       
@@ -580,11 +582,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []); // Empty dependencies as this function is self-contained
 
+  const getGoals = useCallback(async (): Promise<Goal[]> => {
+    try {
+      const goals = await fetchGoalsFromService();
+      dispatch({ type: 'SET_GOALS', payload: goals });
+      return goals;
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      throw error;
+    }
+  }, []);
+
   useEffect(() => {
     if (!state.user?.id) return;
 
     const channel = supabase
-      .channel('realtime-transactions')
+      .channel('transactions-realtime')
       .on(
         'postgres_changes',
         {
@@ -599,7 +612,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
           realtimeTransactionsTimerRef.current = setTimeout(() => {
             realtimeTransactionsTimerRef.current = null;
-            void getTransactions();
+            void Promise.all([getTransactions(), getGoals()]);
           }, 500);
         }
       )
@@ -612,18 +625,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       void supabase.removeChannel(channel);
     };
-  }, [state.user?.id, getTransactions]);
-
-  const getGoals = useCallback(async (): Promise<Goal[]> => {
-    try {
-      const goals = await fetchGoalsFromService();
-      dispatch({ type: 'SET_GOALS', payload: goals });
-      return goals;
-    } catch (error) {
-      console.error('Error fetching goals:', error);
-      throw error;
-    }
-  }, []);
+  }, [state.user?.id, getTransactions, getGoals]);
 
   const recalculateGoalAmounts = async (): Promise<boolean> => {
     try {

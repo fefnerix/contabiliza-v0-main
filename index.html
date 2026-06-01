@@ -51,9 +51,6 @@
     })(window,document,'script','dataLayer','GTM-TTBM5KGZ');</script>
     <!-- End Google Tag Manager -->
 
-    <!-- Vite -->
-    <link rel="modulepreload" href="/src/main.tsx" />
-    
     <script>
       // Pre-carregar branding cache se existir
       (function() {
@@ -98,8 +95,9 @@
     <!-- End Google Tag Manager (noscript) -->
     
     <div id="root"></div>
+    <!-- App primeiro: se o script do Lovable falhar na rede, o Contabiliza ainda sobe. -->
+    <script type="module" src="/src/main.tsx"></script>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

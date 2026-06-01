@@ -11,21 +11,35 @@ import { useBrandingConfig } from '@/hooks/useBrandingConfig';
 import { useBranding } from '@/contexts/BrandingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { InjectFacebookPixel } from '@/components/common/InjectFacebookPixel';
+import { withTimeout } from '@/utils/withTimeout';
+
+const LANDING_THEME_TIMEOUT_MS = 12_000;
+/** Se branding/tema travarem, libera a landing para não ficar tela “vazia”. */
+const LANDING_FALLBACK_VISIBLE_MS = 5_000;
 
 const LandingPage = () => {
   const { companyName } = useBrandingConfig();
   const { isLoading: brandingLoading, lastUpdated } = useBranding();
   const [isThemeLoaded, setIsThemeLoaded] = useState(false);
   const [forcedTheme, setForcedTheme] = useState<string | null>(null);
+  const [allowVisibleFallback, setAllowVisibleFallback] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setAllowVisibleFallback(true), LANDING_FALLBACK_VISIBLE_MS);
+    return () => window.clearTimeout(id);
+  }, []);
 
   // Aplicar tema antes mesmo do primeiro render
   useEffect(() => {
     const loadAndApplyLandingTheme = async () => {
       try {
         console.log('Cargando tema de la landing page...');
-        const { data, error } = await supabase.functions.invoke('get-public-settings', {
-          body: { cacheBuster: Date.now() } // Cache-busting para o tema
-        });
+        const { data, error } = await withTimeout(
+          supabase.functions.invoke('get-public-settings', {
+            body: { cacheBuster: Date.now() },
+          }),
+          LANDING_THEME_TIMEOUT_MS
+        );
         
         if (!error && data?.success && data?.settings?.branding?.landing_theme) {
           const theme = data.settings.branding.landing_theme.value;
@@ -69,7 +83,7 @@ const LandingPage = () => {
   }, [lastUpdated]); // Reagir a mudanças no branding
 
   // Mostrar um loading mínimo enquanto carrega o tema para evitar flash
-  if (!isThemeLoaded || brandingLoading) {
+  if ((!isThemeLoaded || brandingLoading) && !allowVisibleFallback) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center">
         <div className="animate-pulse">

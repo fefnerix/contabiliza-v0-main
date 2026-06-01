@@ -67,6 +67,10 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,ttf,woff,woff2}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [/^\/assets\//, /^\/workbox-/, /^\/sw\.js$/],
         // Dev build (`vite build --mode development`) gera bundle maior; precisa caber no precache
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [

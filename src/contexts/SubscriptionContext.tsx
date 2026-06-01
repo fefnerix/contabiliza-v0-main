@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withTimeout } from '@/utils/withTimeout';
+
+const CHECK_SUBSCRIPTION_FN_TIMEOUT_MS = 15_000;
 
 interface Subscription {
   id: string;
@@ -37,7 +40,19 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       // Usar a nova edge function para verificar assinatura
-      const { data, error } = await supabase.functions.invoke('check-subscription-status');
+      let data: Awaited<ReturnType<typeof supabase.functions.invoke>>["data"];
+      let error: Awaited<ReturnType<typeof supabase.functions.invoke>>["error"];
+      try {
+        const result = await withTimeout(
+          supabase.functions.invoke("check-subscription-status"),
+          CHECK_SUBSCRIPTION_FN_TIMEOUT_MS
+        );
+        data = result.data;
+        error = result.error;
+      } catch {
+        error = { message: "timeout" } as any;
+        data = null;
+      }
 
       if (error) {
         console.error('Error checking subscription via edge function:', error);

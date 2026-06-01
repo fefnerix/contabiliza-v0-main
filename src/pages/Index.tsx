@@ -19,7 +19,6 @@ const Index = () => {
   const { toast } = useToast();
   const {
     user,
-    filteredTransactions,
     transactions,
     setCustomDateRange,
     setTimeRange,
@@ -29,7 +28,8 @@ const Index = () => {
     getTransactions,
     getGoals,
     deleteTransaction,
-    scheduledTransactions
+    scheduledTransactions,
+    isLoading
   } = useAppContext();
   const { t } = usePreferences();
   
@@ -39,13 +39,6 @@ const Index = () => {
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
-  
-  console.log("Dashboard rendered with:", {
-    transactionsCount: transactions.length, 
-    filteredTransactionsCount: filteredTransactions.length,
-    goalsCount: goals.length,
-    scheduledTransactionsCount: scheduledTransactions.length
-  });
   
   // Dados mensais (apenas do mês selecionado + saldo acumulado correto)
   const monthlyData = calculateMonthlyFinancialData(transactions, currentMonth);
@@ -58,10 +51,8 @@ const Index = () => {
   useEffect(() => {
     if (!user?.id) return;
     const loadInitialData = async () => {
-      console.log("Dashboard: Loading initial data...");
       try {
         await Promise.all([getTransactions(), getGoals()]);
-        console.log("Dashboard: Initial data loaded successfully");
       } catch (error) {
         console.error("Dashboard: Error loading initial data:", error);
       }
@@ -75,11 +66,9 @@ const Index = () => {
     const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
     setTimeRange('custom');
     setCustomDateRange(firstDay, lastDay);
-    console.log("Dashboard: Date range updated for month:", currentMonth.toDateString());
   }, [currentMonth, setCustomDateRange, setTimeRange]);
   
   const handleMonthChange = (date: Date) => {
-    console.log("Dashboard: Month changed to:", date.toDateString());
     setCurrentMonth(date);
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
@@ -180,6 +169,7 @@ const Index = () => {
               totalExpenses={totalExpenses}
               balance={balance}
               hideValues={hideValues}
+              isLoading={!!user?.id && isLoading}
               onNavigateToTransactionType={navigateToTransactionType}
             />
           </motion.div>

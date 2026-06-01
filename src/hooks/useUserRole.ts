@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppContext } from '@/contexts/AppContext';
+import { withTimeout } from '@/utils/withTimeout';
+
+const HAS_ROLE_RPC_TIMEOUT_MS = 10_000;
 
 export const useUserRole = () => {
   const { user } = useAppContext();
@@ -34,10 +37,13 @@ export const useUserRole = () => {
         try {
           console.log(`Checking user role (attempt ${attempt}/${MAX_RETRIES})`);
           
-          const { data, error } = await supabase.rpc('has_role', {
-            _user_id: user.id,
-            _role: 'admin'
-          });
+          const { data, error } = await withTimeout(
+            supabase.rpc('has_role', {
+              _user_id: user.id,
+              _role: 'admin'
+            }),
+            HAS_ROLE_RPC_TIMEOUT_MS
+          );
 
           if (error) {
             console.error(`Error checking user role (attempt ${attempt}):`, error);
