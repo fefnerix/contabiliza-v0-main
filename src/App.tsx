@@ -11,11 +11,14 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { SupabaseInitializer } from "@/components/common/SupabaseInitializer";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+import { ProtectedRoute, GuestRoute, OnboardingRoute } from "@/components/ProtectedRoute";
+import HomeRoute from "./pages/HomeRoute";
 import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import RegisterWithPlanPage from "./pages/RegisterWithPlanPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -60,27 +63,126 @@ function App() {
                     <SupabaseInitializer>
                       <BrowserRouter>
                         <Routes>
-                          <Route path="/" element={<LandingPage />} />
-                          <Route path="/dashboard" element={<Index />} />
+                          <Route path="/" element={<HomeRoute />} />
                           <Route path="/landing" element={<LandingPage />} />
-                          <Route path="/login" element={<LoginPage />} />
-                          <Route path="/register" element={<RegisterPage />} />
-                          <Route path="/register/:planType" element={<RegisterWithPlanPage />} />
+                          <Route
+                            path="/login"
+                            element={
+                              <GuestRoute>
+                                <LoginPage />
+                              </GuestRoute>
+                            }
+                          />
+                          <Route
+                            path="/register"
+                            element={
+                              <GuestRoute>
+                                <RegisterPage />
+                              </GuestRoute>
+                            }
+                          />
+                          <Route
+                            path="/register/:planType"
+                            element={
+                              <GuestRoute>
+                                <RegisterWithPlanPage />
+                              </GuestRoute>
+                            }
+                          />
+                          <Route
+                            path="/onboarding"
+                            element={
+                              <OnboardingRoute>
+                                <OnboardingPage />
+                              </OnboardingRoute>
+                            }
+                          />
                           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                           <Route path="/reset-password" element={<ResetPasswordPage />} />
-                          <Route path="/profile" element={<ProfilePage />} />
-                          <Route path="/transactions" element={<TransactionsPage />} />
-                          <Route path="/expenses" element={<ExpensesPage />} />
-                          <Route path="/goals" element={<GoalsPage />} />
-                          <Route path="/reports" element={<ReportsPage />} />
-                          <Route path="/schedule" element={<SchedulePage />} />
-                          <Route path="/settings" element={<SettingsPage />} />
-                          <Route path="/categories" element={<CategoriesPage />} />
+                          <Route
+                            path="/dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <Index />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <ProfilePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/transactions"
+                            element={
+                              <ProtectedRoute>
+                                <TransactionsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/expenses"
+                            element={
+                              <ProtectedRoute>
+                                <ExpensesPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/goals"
+                            element={
+                              <ProtectedRoute>
+                                <GoalsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/reports"
+                            element={
+                              <ProtectedRoute>
+                                <ReportsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/schedule"
+                            element={
+                              <ProtectedRoute>
+                                <SchedulePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/settings"
+                            element={
+                              <ProtectedRoute>
+                                <SettingsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/categories"
+                            element={
+                              <ProtectedRoute>
+                                <CategoriesPage />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route path="/plans" element={<PlansPage />} />
                           <Route path="/checkout/:planType" element={<CheckoutPage />} />
                           <Route path="/payment-success" element={<PaymentSuccessPage />} />
                           <Route path="/thank-you" element={<ThankYouPage />} />
-                          <Route path="/achievements" element={<AchievementsPage />} />
+                          <Route
+                            path="/achievements"
+                            element={
+                              <ProtectedRoute>
+                                <AchievementsPage />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route
                             path="/admin"
                             element={

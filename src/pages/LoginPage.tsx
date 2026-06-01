@@ -11,6 +11,7 @@ import { loginUser } from '@/services/authService';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { isOnboardingDone } from '@/utils/onboarding';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -52,13 +53,26 @@ const LoginPage = () => {
         } else {
           navigate('/admin', { replace: true });
         }
+        return;
+      }
+
+      if (!isOnboardingDone()) {
+        navigate('/onboarding', { replace: true });
+        return;
+      }
+
+      if (redirectTo && redirectTo !== '/login' && redirectTo !== '/register') {
+        navigate(redirectTo, { replace: true });
       } else {
-        console.log('Redirecionando usuário normal para /dashboard');
         navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       console.error('Error checking user role:', error);
-      navigate('/dashboard', { replace: true });
+      if (!isOnboardingDone()) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   };
 
@@ -225,6 +239,12 @@ const LoginPage = () => {
                 </Button>
               </form>
               
+              <div className="mt-4 text-center text-sm">
+                <Link to="/register" className="text-primary hover:underline font-medium">
+                  Crear cuenta gratis
+                </Link>
+              </div>
+
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>
                   {t('auth.termsAgreement')}{' '}

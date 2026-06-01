@@ -410,7 +410,10 @@ export type Database = {
       }
       poupeja_users: {
         Row: {
+          country: string | null
           created_at: string | null
+          currency: string | null
+          currency_symbol: string | null
           email: string
           id: string
           name: string | null
@@ -419,7 +422,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string | null
+          currency?: string | null
+          currency_symbol?: string | null
           email: string
           id: string
           name?: string | null
@@ -428,7 +434,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string | null
+          currency?: string | null
+          currency_symbol?: string | null
           email?: string
           id?: string
           name?: string | null

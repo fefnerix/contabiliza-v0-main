@@ -12,6 +12,9 @@ import CountryPhoneInput from '@/components/common/CountryPhoneInput';
 import { trackFacebookEvents } from '@/utils/facebookTracking';
 import { usePreferences, Currency, Language } from '@/contexts/PreferencesContext';
 import { COUNTRIES, getCountryTimezone } from '@/data/countries';
+import { getOnboardingCountry, normalizeWhatsAppDigits } from '@/constants/onboardingCountries';
+import { clearOnboardingDone } from '@/utils/onboarding';
+import { Eye, EyeOff } from 'lucide-react';
 
 const COUNTRY_DEFAULTS: Record<string, { timezone: string; language: Language; currency: Currency }> = {
   BR: { timezone: 'America/Sao_Paulo', language: 'pt', currency: 'BRL' },
@@ -44,6 +47,9 @@ const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
   const [countryCode, setCountryCode] = useState('BR');
   const [error, setError] = useState<string | null>(null);
@@ -249,6 +255,121 @@ const RegisterPage = () => {
     }
   };
 
+  const handleFreeRegistration = async () => {
+    const formElement = document.getElementById('register-form');
+
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      setIsLoading(false);
+      formElement?.classList.remove('form-loading');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      setIsLoading(false);
+      formElement?.classList.remove('form-loading');
+      return;
+    }
+
+    const countryMeta =
+      getOnboardingCountry(countryCode) ?? getOnboardingCountry('BR');
+    if (!countryMeta) {
+      setError('Selecciona un país válido.');
+      setIsLoading(false);
+      formElement?.classList.remove('form-loading');
+      return;
+    }
+
+    const phoneDigits = normalizeWhatsAppDigits(whatsapp, countryMeta);
+
+    try {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            name: fullName,
+            phone: phoneDigits,
+            whatsapp: phoneDigits,
+            country: countryMeta.code,
+            currency: countryMeta.currency,
+          },
+        },
+      });
+
+      if (signUpError) {
+        const msg = signUpError.message ?? '';
+        if (
+          msg.includes('already registered') ||
+          msg.includes('User already registered')
+        ) {
+          setError(
+            'Este correo ya está registrado. Inicia sesión en /login o recupera tu contraseña.'
+          );
+        } else {
+          setError(msg || 'No fue posible crear la cuenta.');
+        }
+        setIsLoading(false);
+        formElement?.classList.remove('form-loading');
+        return;
+      }
+
+      if (!signUpData.user) {
+        throw new Error('Usuario no retornado después del registro.');
+      }
+
+      await waitForValidSession(10, 1000).catch(async () => {
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (loginError) throw loginError;
+      });
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await supabase.from('poupeja_users').upsert({
+          id: user.id,
+          email: user.email!,
+          name: fullName,
+          phone: phoneDigits,
+          country: countryMeta.code,
+          currency: countryMeta.currency,
+          currency_symbol: countryMeta.symbol,
+        });
+      }
+
+      setCountry(countryMeta.code);
+      setTimezone(countryMeta.timezone);
+      setLanguage(countryMeta.language);
+      setCurrency(countryMeta.currency);
+      try {
+        localStorage.setItem('user_currency_symbol', countryMeta.symbol);
+        localStorage.setItem('user_country', countryMeta.code);
+      } catch {
+        /* ignore */
+      }
+
+      clearOnboardingDone();
+      trackFacebookEvents.completeRegistration('email');
+      toast({
+        title: '¡Cuenta creada!',
+        description: 'Completa la activación en los próximos pasos.',
+      });
+      navigate('/onboarding', { replace: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error desconocido.';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+      formElement?.classList.remove('form-loading');
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
@@ -266,12 +387,9 @@ const RegisterPage = () => {
     if (formElement) {
       formElement.classList.add('form-loading');
     }
-  
+
     if (!priceId) {
-      setError("Price ID no encontrado en la URL. Por favor, selecciona un plan.");
-      setIsLoading(false);
-      formElement?.classList.remove('form-loading');
-      navigate('/plans');
+      await handleFreeRegistration();
       return;
     }
   
@@ -482,7 +600,9 @@ const RegisterPage = () => {
           </div>
           <h1 className="text-3xl font-bold text-center text-foreground">Crear Cuenta</h1>
           <p className="text-muted-foreground text-center mt-2">
-            Completa los campos a continuación para crear tu cuenta.
+            {priceId
+              ? 'Completa los campos para crear tu cuenta y continuar al pago.'
+              : 'Registro gratuito — activa tu cuenta en pocos pasos.'}
           </p>
         </div>
 
@@ -507,6 +627,28 @@ const RegisterPage = () => {
           </div>
 
           <div>
+            <Label htmlFor="whatsapp">País y WhatsApp</Label>
+            <CountryPhoneInput
+              value={whatsapp}
+              onChange={handleWhatsappChange}
+              onCountryChange={handleCountryChange}
+              placeholder="número — ej.: 11 99999-9999"
+              required
+              error={whatsappError || undefined}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              El código del país se completa al elegir tu país. Este número activa el asistente
+              por WhatsApp.
+            </p>
+            {isValidatingWhatsapp && (
+              <p className="text-sm text-blue-600 mt-1">Validando WhatsApp...</p>
+            )}
+            {whatsappError && (
+              <p className="text-sm text-red-600 mt-1">{whatsappError}</p>
+            )}
+          </div>
+
+          <div>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -518,7 +660,6 @@ const RegisterPage = () => {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                // Limpar erro quando usuário começar a digitar
                 if (emailError) {
                   setEmailError(null);
                 }
@@ -535,44 +676,69 @@ const RegisterPage = () => {
           </div>
 
           <div>
-            <Label htmlFor="whatsapp">WhatsApp</Label>
-            <CountryPhoneInput
-              value={whatsapp}
-              onChange={handleWhatsappChange}
-              onCountryChange={handleCountryChange}
-              placeholder="(DDD) número — ej.: 11 1234-5678"
-              required
-              error={whatsappError || error}
-            />
-            <p className="mt-2 text-xs text-gray-500">
-              Este número será utilizado para enviar mensagens e notificações importantes via WhatsApp.
-            </p>
-            {isValidatingWhatsapp && (
-              <p className="text-sm text-blue-600 mt-1">Validando WhatsApp...</p>
-            )}
-            {whatsappError && (
-              <p className="text-sm text-red-600 mt-1">{whatsappError}</p>
-            )}
+            <Label htmlFor="password">Contraseña</Label>
+            <div className="relative mt-1">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              placeholder="Registra tu contraseña de acceso"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          {!priceId && (
+            <div>
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <div className="relative mt-1">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  placeholder="Repite tu contraseña"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta e Ir a Pago'}
+              {isLoading
+                ? 'Creando cuenta...'
+                : priceId
+                  ? 'Crear Cuenta e Ir a Pago'
+                  : 'Crear cuenta gratis'}
             </Button>
           </div>
         </form>
