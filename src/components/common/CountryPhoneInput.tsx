@@ -19,6 +19,8 @@ interface CountryPhoneInputProps {
   value: string;
   onChange: (value: string) => void;
   onCountryChange?: (countryCode: string) => void;
+  /** País inicial fixo (ignora geolocalização quando informado). */
+  defaultCountryCode?: string;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -30,26 +32,42 @@ const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
   value,
   onChange,
   onCountryChange,
+  defaultCountryCode,
   label = 'WhatsApp',
   placeholder = 'Digite su número',
   required = false,
   className,
   error
 }) => {
+  const fixedCountry = defaultCountryCode
+    ? getCountryByCode(defaultCountryCode)
+    : undefined;
   const { country: detectedCountry, isLoading: isDetecting } = useGeolocation();
-  const [selectedCountry, setSelectedCountry] = useState<Country>(detectedCountry);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(
+    () => fixedCountry ?? detectedCountry
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const selectRef = useRef<HTMLDivElement>(null);
 
-  // Atualiza o país selecionado quando a detecção termina
   useEffect(() => {
+    if (!defaultCountryCode) return;
+    const country = getCountryByCode(defaultCountryCode);
+    if (country) {
+      setSelectedCountry(country);
+      onCountryChange?.(country.code);
+    }
+  }, [defaultCountryCode, onCountryChange]);
+
+  // Atualiza o país selecionado quando a detecção termina (sem país fixo)
+  useEffect(() => {
+    if (defaultCountryCode) return;
     if (!isDetecting && detectedCountry) {
       setSelectedCountry(detectedCountry);
       onCountryChange?.(detectedCountry.code);
     }
-  }, [isDetecting, detectedCountry, onCountryChange]);
+  }, [defaultCountryCode, isDetecting, detectedCountry, onCountryChange]);
 
   // Filtra países baseado no termo de busca
   const filteredCountries = countries.filter(country =>
@@ -114,7 +132,7 @@ const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
               isOpen && "border-blue-500 ring-2 ring-blue-500 ring-offset-2"
             )}
             onClick={() => setIsOpen(!isOpen)}
-            disabled={isDetecting}
+            disabled={isDetecting && !defaultCountryCode}
           >
             <span className="text-lg mr-2">{selectedCountry.flagEmoji}</span>
             <span className="text-sm font-medium">{selectedCountry.phoneCode}</span>

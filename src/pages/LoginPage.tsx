@@ -99,12 +99,7 @@ const LoginPage = () => {
           description: t('auth.redirecting') || 'Redirigiendo...',
         });
         
-        const redirectTo = new URLSearchParams(location.search).get('redirect');
-        if (redirectTo) {
-          navigate(redirectTo === '/admin' ? '/admin/dashboard' : redirectTo, { replace: true });
-        } else {
-          await checkUserRoleAndRedirect(authData.user.id);
-        }
+        await checkUserRoleAndRedirect(authData.user.id);
       } else {
         throw new Error('Login successful but no session established');
       }
@@ -241,7 +236,7 @@ const LoginPage = () => {
               
               <div className="mt-4 text-center text-sm">
                 <Link to="/register" className="text-primary hover:underline font-medium">
-                  Crear cuenta gratis
+                  ¿No tienes cuenta? Crear cuenta
                 </Link>
               </div>
 

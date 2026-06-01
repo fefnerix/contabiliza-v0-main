@@ -61,6 +61,18 @@ const getDaysAgoStart = (days: number) => {
 /* ------------------------------------------------------------------ */
 
 /** Data de calendário local (sem deslocar dia por UTC). Aceita YYYY-MM-DD ou ISO com prefixo YYYY-MM-DD. */
+/** Ordena por fecha DESC y, a igualdad, created_at DESC. */
+export const sortTransactionsByDateDesc = (transactions: Transaction[]): Transaction[] => {
+  return [...transactions].sort((a, b) => {
+    const dateDiff =
+      createLocalDate(b.date).getTime() - createLocalDate(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return bCreated - aCreated;
+  });
+};
+
 export const createLocalDate = (dateInput: string | Date | null | undefined): Date => {
   if (dateInput == null) return new Date(NaN);
   if (dateInput instanceof Date && !Number.isNaN(dateInput.getTime())) {
@@ -87,10 +99,7 @@ export const filterTransactionsByTimeRange = (
   customStartDate?: Date,
   customEndDate?: Date
 ): Transaction[] => {
-  // Ordena mais recentes primeiro
-  const sortedTransactions = [...transactions].sort(
-    (a, b) => createLocalDate(b.date).getTime() - createLocalDate(a.date).getTime()
-  );
+  const sortedTransactions = sortTransactionsByDateDesc(transactions);
 
   const now = new Date();
   now.setHours(23, 59, 59, 999); // fim de hoje
@@ -211,7 +220,7 @@ export const calculateMonthlyFinancialData = (
     monthlyIncome,
     monthlyExpenses,
     accumulatedBalance,
-    monthTransactions,
+    monthTransactions: sortTransactionsByDateDesc(monthTransactions),
   };
 
   return result;

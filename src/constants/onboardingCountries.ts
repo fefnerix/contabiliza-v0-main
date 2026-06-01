@@ -28,11 +28,11 @@ export interface OnboardingCountry {
   timezone: string;
 }
 
-/** Países LATAM prioritários (ordem do produto). */
+/** Países LATAM (Colombia primero por defecto del producto). */
 export const ONBOARDING_LATAM_COUNTRIES: OnboardingCountry[] = [
+  { code: "CO", name: "Colombia", flag: "🇨🇴", phoneCode: "+57", currency: "COP", symbol: "$", language: "es", timezone: "America/Bogota" },
   { code: "BR", name: "Brasil", flag: "🇧🇷", phoneCode: "+55", currency: "BRL", symbol: "R$", language: "pt", timezone: "America/Sao_Paulo" },
   { code: "MX", name: "México", flag: "🇲🇽", phoneCode: "+52", currency: "MXN", symbol: "MX$", language: "es", timezone: "America/Mexico_City" },
-  { code: "CO", name: "Colombia", flag: "🇨🇴", phoneCode: "+57", currency: "COP", symbol: "$", language: "es", timezone: "America/Bogota" },
   { code: "AR", name: "Argentina", flag: "🇦🇷", phoneCode: "+54", currency: "ARS", symbol: "$", language: "es", timezone: "America/Argentina/Buenos_Aires" },
   { code: "CL", name: "Chile", flag: "🇨🇱", phoneCode: "+56", currency: "CLP", symbol: "$", language: "es", timezone: "America/Santiago" },
   { code: "PE", name: "Perú", flag: "🇵🇪", phoneCode: "+51", currency: "PEN", symbol: "S/", language: "es", timezone: "America/Lima" },

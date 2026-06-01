@@ -102,7 +102,7 @@ const ProfilePage = () => {
 
       if (validationError) {
         console.error('Erro na validação de email:', validationError);
-        setEmailError('Erro de conexão. Tente novamente.');
+        setEmailError('Error de conexión. Intenta de nuevo.');
         return;
       }
 
@@ -114,14 +114,14 @@ const ProfilePage = () => {
         if (emailErrors.length > 0) {
           setEmailError(emailErrors[0]);
         } else {
-          setEmailError('Este e-mail já possui cadastro no sistema.');
+          setEmailError('Este correo ya está registrado en el sistema.');
         }
       } else {
         setEmailError(null);
       }
     } catch (error) {
       console.error('Erro na validação de email:', error);
-      setEmailError('Erro de conexão. Tente novamente.');
+      setEmailError('Error de conexión. Intenta de nuevo.');
     } finally {
       setIsValidatingEmail(false);
     }
@@ -156,7 +156,7 @@ const ProfilePage = () => {
 
       if (validationError) {
         console.error('Erro na validação de telefone:', validationError);
-        setPhoneError('Erro de conexão. Tente novamente.');
+        setPhoneError('Error de conexión. Intenta de nuevo.');
         return;
       }
 
@@ -168,14 +168,14 @@ const ProfilePage = () => {
         if (phoneErrors.length > 0) {
           setPhoneError(phoneErrors[0]);
         } else {
-          setPhoneError('Este WhatsApp já possui cadastro no sistema.');
+          setPhoneError('Este WhatsApp ya está registrado en el sistema.');
         }
       } else {
         setPhoneError(null);
       }
     } catch (error) {
       console.error('Erro na validação de telefone:', error);
-      setPhoneError('Erro de conexão. Tente novamente.');
+      setPhoneError('Error de conexión. Intenta de nuevo.');
     } finally {
       setIsValidatingPhone(false);
     }
@@ -202,7 +202,7 @@ const ProfilePage = () => {
     if (emailError || phoneError) {
       toast({
         title: t('common.error'),
-        description: 'Por favor, corrija os erros nos campos antes de continuar.',
+        description: 'Por favor corrige los errores en los campos antes de continuar.',
         variant: 'destructive',
       });
       setUpdatingProfile(false);
@@ -235,7 +235,7 @@ const ProfilePage = () => {
           console.error('ProfilePage: Error validating data:', validationError);
           toast({
             title: t('common.error'),
-            description: 'Erro de conexão. Tente novamente.',
+            description: 'Error de conexión. Intenta de nuevo.',
             variant: 'destructive',
           });
           setUpdatingProfile(false);

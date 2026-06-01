@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { SkeletonCard } from '@/components/dashboard/SkeletonCard';
 import { formatCurrency } from '@/utils/transactionUtils';
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -31,17 +31,9 @@ const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        {[0, 1, 2].map((i) => (
-          <Card key={i} className="border border-border/40 shadow-sm overflow-hidden">
-            <CardContent className="p-4 lg:p-6 space-y-4">
-              <div className="flex justify-center gap-2">
-                <Skeleton className="h-9 w-9 rounded-full" />
-                <Skeleton className="h-4 w-28 self-center" />
-              </div>
-              <Skeleton className="h-8 w-36 mx-auto" />
-            </CardContent>
-          </Card>
-        ))}
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

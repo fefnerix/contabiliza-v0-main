@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
-import { getSupabaseEnvOrThrow } from "./env";
+import { getSupabaseEnvOrThrow, isSupabaseEnvConfigured } from "./env";
+
+if (!isSupabaseEnvConfigured()) {
+  throw new Error("Missing Supabase env vars");
+}
 
 const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = getSupabaseEnvOrThrow();
 

@@ -21,11 +21,11 @@ interface CustomerDrawerProps {
 }
 
 const statusMeta: Record<string, { label: string; className: string }> = {
-  active: { label: "Ativo", className: "bg-green-100 text-green-700" },
-  expiring: { label: "Expirando", className: "bg-yellow-100 text-yellow-700" },
+  active: { label: "Activo", className: "bg-green-100 text-green-700" },
+  expiring: { label: "Por expirar", className: "bg-yellow-100 text-yellow-700" },
   expired: { label: "Expirado", className: "bg-red-100 text-red-700" },
   trial: { label: "Trial", className: "bg-blue-100 text-blue-700" },
-  no_access: { label: "Sem acesso", className: "bg-gray-100 text-gray-700" },
+  no_access: { label: "Sin acceso", className: "bg-gray-100 text-gray-700" },
 };
 
 export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChange, customer, onReload }) => {
@@ -80,8 +80,8 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
         });
       } catch (error) {
         toast({
-          title: "Erro ao carregar perfil do cliente",
-          description: error instanceof Error ? error.message : "Tente novamente.",
+          title: "Error al cargar el perfil del cliente",
+          description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
           variant: "destructive",
         });
       } finally {
@@ -92,12 +92,12 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
   }, [customer, fetchAccessHistory, fetchEmailHistory, fetchFinance, open, toast]);
 
   const expiryText = useMemo(() => {
-    if (!customer?.current_period_end) return "Sem data de expiração";
+    if (!customer?.current_period_end) return "Sin fecha de expiración";
     const end = new Date(customer.current_period_end);
     const now = new Date();
     const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (days >= 0) return `Expira em ${days} dia(s)`;
-    return `Expirado há ${Math.abs(days)} dia(s)`;
+    if (days >= 0) return `Expira en ${days} día(s)`;
+    return `Expirado hace ${Math.abs(days)} día(s)`;
   }, [customer?.current_period_end]);
 
   const handleGrant = async (payload: { plan_type: string; days?: number; notes?: string }) => {
@@ -114,19 +114,35 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
 
   const handleResetPassword = async () => {
     if (!customer) return;
-    const { link } = await resetPassword(customer.email);
-    if (link) {
-      await navigator.clipboard.writeText(link);
-      toast({ title: "Link copiado", description: "Link de recovery copiado para área de transferência." });
+    try {
+      const { link } = await resetPassword(customer.email);
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        toast({ title: "Enlace copiado", description: "Enlace de recuperación copiado al portapapeles." });
+      }
+    } catch (error) {
+      toast({
+        title: "Error al generar enlace",
+        description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleImpersonate = async () => {
     if (!customer) return;
-    const { link } = await generateMagicLink(customer.email);
-    if (link) {
-      window.open(link, "_blank", "noopener,noreferrer");
-      toast({ title: "Modo impersonação ativo", description: "Acesso abriu em nova aba." });
+    try {
+      const { link } = await generateMagicLink(customer.email);
+      if (link) {
+        window.open(link, "_blank", "noopener,noreferrer");
+        toast({ title: "Modo impersonación activo", description: "El acceso se abrió en una nueva pestaña." });
+      }
+    } catch (error) {
+      toast({
+        title: "Error al impersonar",
+        description: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -135,7 +151,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
     await editUser(customer.id, form);
     await onReload();
     setEditMode(false);
-    toast({ title: "Dados atualizados" });
+    toast({ title: "Datos actualizados" });
   };
 
   return (
@@ -148,34 +164,34 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                 {(customer?.name?.[0] || customer?.email?.[0] || "U").toUpperCase()}
               </div>
               <div>
-                <div>{customer?.name || "Sem nome"}</div>
+                <div>{customer?.name || "Sin nombre"}</div>
                 <div className="text-sm font-normal text-muted-foreground">{customer?.email}</div>
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
-                <Badge variant="outline">{customer?.plan_type || "sem plano"}</Badge>
+                <Badge variant="outline">{customer?.plan_type || "sin plan"}</Badge>
               </div>
             </SheetTitle>
           </SheetHeader>
 
           <Tabs defaultValue="access" className="mt-4">
             <TabsList className="grid grid-cols-5">
-              <TabsTrigger value="access">Acesso</TabsTrigger>
-              <TabsTrigger value="data">Dados</TabsTrigger>
-              <TabsTrigger value="history">Histórico</TabsTrigger>
-              <TabsTrigger value="finance">Financeiro</TabsTrigger>
-              <TabsTrigger value="emails">Emails</TabsTrigger>
+              <TabsTrigger value="access">Acceso</TabsTrigger>
+              <TabsTrigger value="data">Datos</TabsTrigger>
+              <TabsTrigger value="history">Historial</TabsTrigger>
+              <TabsTrigger value="finance">Finanzas</TabsTrigger>
+              <TabsTrigger value="emails">Correos</TabsTrigger>
             </TabsList>
 
             <TabsContent value="access" className="space-y-4 mt-4">
               <div className="rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Status atual</span>
+                  <span className="text-sm text-muted-foreground">Estado actual</span>
                   <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
                 </div>
                 <p className="mt-2 text-sm">{expiryText}</p>
-                <p className="text-sm text-muted-foreground">Plano: {customer?.plan_type || "sem plano"}</p>
-                <p className="text-sm text-muted-foreground">Fonte: {customer?.source || "manual"}</p>
+                <p className="text-sm text-muted-foreground">Plan: {customer?.plan_type || "sin plan"}</p>
+                <p className="text-sm text-muted-foreground">Origen: {customer?.source || "manual"}</p>
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-sm">
                     <span>Health score</span>
@@ -186,9 +202,9 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button onClick={() => setGrantOpen(true)}>Ativar acesso</Button>
+                <Button onClick={() => setGrantOpen(true)}>Activar acceso</Button>
                 <Button variant="destructive" onClick={() => setRevokeOpen(true)}>
-                  Revogar acesso
+                  Revocar acceso
                 </Button>
                 <Button variant="outline" onClick={() => quickExtend(7)}>
                   +7d
@@ -208,13 +224,13 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
               <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                 <div className="rounded-lg border p-4">
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="px-0">Avançado</Button>
+                    <Button variant="ghost" className="px-0">Avanzado</Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-2">
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={handleResetPassword}>Resetar Senha</Button>
+                      <Button variant="outline" onClick={handleResetPassword}>Restablecer contraseña</Button>
                       <Button variant="outline" onClick={handleImpersonate}>Impersonar</Button>
-                      <Button variant="destructive" onClick={() => setDeleteOpen(true)}>Excluir Conta</Button>
+                      <Button variant="destructive" onClick={() => setDeleteOpen(true)}>Eliminar cuenta</Button>
                     </div>
                   </CollapsibleContent>
                 </div>
@@ -227,26 +243,26 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                   {editMode ? (
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>Cancelar</Button>
-                      <Button size="sm" onClick={saveData}>Salvar</Button>
+                      <Button size="sm" onClick={saveData}>Guardar</Button>
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>✏️ Editar</Button>
                   )}
                 </div>
-                <p><strong>Nome:</strong> {editMode ? <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /> : customer?.name || "-"}</p>
+                <p><strong>Nombre:</strong> {editMode ? <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /> : customer?.name || "-"}</p>
                 <p><strong>Email:</strong> {editMode ? <Input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /> : customer?.email}</p>
-                <p><strong>Telefone:</strong> {editMode ? <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /> : customer?.phone || "-"}</p>
-                <p><strong>Cadastrado em:</strong> {customer?.created_at ? new Date(customer.created_at).toLocaleString("pt-BR") : "-"}</p>
-                <p><strong>Último login:</strong> {customer?.last_sign_in_at ? new Date(customer.last_sign_in_at).toLocaleString("pt-BR") : "—"}</p>
-                <p><strong>Idioma:</strong> pt-BR</p>
+                <p><strong>Teléfono:</strong> {editMode ? <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /> : customer?.phone || "-"}</p>
+                <p><strong>Registrado:</strong> {customer?.created_at ? new Date(customer.created_at).toLocaleString("es-419") : "-"}</p>
+                <p><strong>Último acceso:</strong> {customer?.last_sign_in_at ? new Date(customer.last_sign_in_at).toLocaleString("es-419") : "—"}</p>
+                <p><strong>Idioma:</strong> es</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border p-4 text-sm">
-                  <p className="text-muted-foreground">Transações</p>
+                  <p className="text-muted-foreground">Transacciones</p>
                   <p className="text-xl font-semibold">{finance.transactions?.length ?? 0}</p>
                 </div>
                 <div className="rounded-lg border p-4 text-sm">
-                  <p className="text-muted-foreground">Metas / Categorias</p>
+                  <p className="text-muted-foreground">Metas / Categorías</p>
                   <p className="text-xl font-semibold">{finance.counters?.goals ?? 0} / {finance.counters?.categories ?? 0}</p>
                 </div>
               </div>
@@ -254,9 +270,9 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
 
             <TabsContent value="history" className="mt-4">
               {loading ? (
-                <p className="text-sm text-muted-foreground">Carregando histórico...</p>
+                <p className="text-sm text-muted-foreground">Cargando historial...</p>
               ) : history.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma ativação manual registrada.</p>
+                <p className="text-sm text-muted-foreground">No hay activaciones manuales registradas.</p>
               ) : (
                 <div className="space-y-3">
                   {history.map((item) => (
@@ -265,7 +281,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                         {item.action === "activated" ? "✅" : item.action === "revoked" ? "❌" : item.action === "extended" ? "🔵" : item.action === "expired" ? "🟡" : "⚪"} {item.action} - {item.plan_type || "n/a"}
                       </p>
                       <p className="text-muted-foreground">
-                        {item.source || "manual"} • {item.created_at ? new Date(item.created_at).toLocaleString("pt-BR") : "-"}
+                        {item.source || "manual"} • {item.created_at ? new Date(item.created_at).toLocaleString("es-419") : "-"}
                       </p>
                       {item.notes && <p className="mt-1">{item.notes}</p>}
                     </div>
@@ -277,11 +293,11 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
             <TabsContent value="finance" className="mt-4 space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg border p-3 text-sm">
-                  <p className="text-muted-foreground">Receita</p>
+                  <p className="text-muted-foreground">Ingresos</p>
                   <p className="text-lg font-semibold">R$ {Number(finance.totals?.income ?? 0).toFixed(2)}</p>
                 </div>
                 <div className="rounded-lg border p-3 text-sm">
-                  <p className="text-muted-foreground">Despesa</p>
+                  <p className="text-muted-foreground">Gastos</p>
                   <p className="text-lg font-semibold">R$ {Number(finance.totals?.expense ?? 0).toFixed(2)}</p>
                 </div>
                 <div className="rounded-lg border p-3 text-sm">
@@ -290,7 +306,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                 </div>
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Valor</TableHead><TableHead>Categoria</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Fecha</TableHead><TableHead>Descripción</TableHead><TableHead>Valor</TableHead><TableHead>Categoría</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(finance.transactions ?? []).map((tx: any) => (
                     <TableRow key={tx.id}>
@@ -308,7 +324,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
             <TabsContent value="emails" className="mt-4 space-y-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button>Enviar email</Button>
+                  <Button>Enviar correo</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 space-y-2">
                   {["welcome", "access_activated", "expiring_7d", "expiring_1d", "expired", "payment_failed", "payment_retry", "winback", "trial_started"].map((tpl) => (
@@ -319,7 +335,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                       onClick={async () => {
                         if (!customer) return;
                         await sendEmail(customer.id, customer.email, tpl);
-                        toast({ title: "Email enviado", description: `Template ${tpl}` });
+                        toast({ title: "Correo enviado", description: `Plantilla ${tpl}` });
                       }}
                     >
                       {tpl}
@@ -328,14 +344,14 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                 </PopoverContent>
               </Popover>
               <Table>
-                <TableHeader><TableRow><TableHead>Template</TableHead><TableHead>Assunto</TableHead><TableHead>Status</TableHead><TableHead>Data</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Plantilla</TableHead><TableHead>Asunto</TableHead><TableHead>Estado</TableHead><TableHead>Fecha</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {emailHistory.map((e) => (
                     <TableRow key={e.id}>
                       <TableCell>{e.template}</TableCell>
                       <TableCell>{e.subject || "-"}</TableCell>
                       <TableCell>{e.status === "sent" ? "✅" : "❌"}</TableCell>
-                      <TableCell>{new Date(e.created_at).toLocaleString("pt-BR")}</TableCell>
+                      <TableCell>{new Date(e.created_at).toLocaleString("es-419")}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -348,19 +364,19 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
       <GrantAccessModal open={grantOpen} onOpenChange={setGrantOpen} onConfirm={handleGrant} />
       <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Revogar acesso?</AlertDialogTitle><AlertDialogDescription>Esta ação cancela o acesso do usuário.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>¿Revocar acceso?</AlertDialogTitle><AlertDialogDescription>Esta acción cancela el acceso del usuario.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => { if (!customer) return; await revokeAccess(customer.id); await onReload(); }}>Revogar</AlertDialogAction>
+            <AlertDialogAction onClick={async () => { if (!customer) return; await revokeAccess(customer.id); await onReload(); }}>Revocar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Excluir conta?</AlertDialogTitle><AlertDialogDescription>Confirme para excluir permanentemente os dados.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>¿Eliminar cuenta?</AlertDialogTitle><AlertDialogDescription>Confirma para eliminar permanentemente los datos.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => { if (!customer) return; await deleteUser(customer.id); await onReload(); }}>Excluir</AlertDialogAction>
+            <AlertDialogAction onClick={async () => { if (!customer) return; await deleteUser(customer.id); await onReload(); }}>Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

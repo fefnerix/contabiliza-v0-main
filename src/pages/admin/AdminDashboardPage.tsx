@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 
-const money = (n: number) => `R$ ${n.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+const money = (n: number) =>
+  n.toLocaleString("es-419", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 const delta = (n: number) => (n >= 0 ? `↑ ${n}` : `↓ ${Math.abs(n)}`);
 const relative = (iso: string) => {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const min = Math.floor(diff / 60000);
-  if (min < 1) return "há instantes";
-  if (min < 60) return `há ${min} min`;
+  if (min < 1) return "hace un momento";
+  if (min < 60) return `hace ${min} min`;
   const h = Math.floor(min / 60);
-  if (h < 24) return `há ${h}h`;
-  return `há ${Math.floor(h / 24)}d`;
+  if (h < 24) return `hace ${h}h`;
+  return `hace ${Math.floor(h / 24)}d`;
 };
 
 const serviceClass: Record<string, string> = {
@@ -33,30 +34,30 @@ const AdminDashboardPage = () => {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-zinc-100">Dashboard Operacional</h2>
-          <p className="text-zinc-400 text-sm">Visão de operação, receita e saúde da plataforma.</p>
+          <h2 className="text-2xl font-semibold text-zinc-100">Panel operativo</h2>
+          <p className="text-zinc-400 text-sm">Vista de operación, ingresos y salud de la plataforma.</p>
         </div>
         <Button variant="outline" onClick={refresh}>
           <RefreshCw className="h-4 w-4 mr-2" />
-          Verificar agora
+          Actualizar ahora
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" />Novos cadastros</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.newUsers}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.newUsers)} vs ontem</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" />Ativações hoje</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.activatedToday}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.activatedToday)} vs ontem</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><TriangleAlert className="h-4 w-4" />Erros webhook</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.webhookErrors}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.webhookErrors)} vs ontem</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><CalendarClock className="h-4 w-4" />Expirando em 7 dias</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.expiringSoon}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.expiringSoon)} vs ontem</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" />Nuevos registros</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.newUsers}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.newUsers)} vs ayer</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" />Activaciones hoy</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.activatedToday}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.activatedToday)} vs ayer</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><TriangleAlert className="h-4 w-4" />Errores webhook</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.webhookErrors}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.webhookErrors)} vs ayer</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><CalendarClock className="h-4 w-4" />Expiran en 7 días</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.expiringSoon}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.expiringSoon)} vs ayer</p></CardContent></Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="md:col-span-1"><CardHeader><CardTitle>MRR</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{money(revenue.mrr)}</p></CardContent></Card>
         <Card className="md:col-span-1"><CardHeader><CardTitle>ARR</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{money(revenue.arr)}</p></CardContent></Card>
-        <Card className="md:col-span-1"><CardHeader><CardTitle>Assinantes</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{revenue.activeSubscribers}</p><div className="flex gap-2 mt-2"><Badge variant="secondary">mensal {revenue.byPlan.monthly}</Badge><Badge variant="secondary">anual {revenue.byPlan.annual}</Badge><Badge variant="secondary">lifetime {revenue.byPlan.lifetime}</Badge></div></CardContent></Card>
+        <Card className="md:col-span-1"><CardHeader><CardTitle>Suscriptores</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{revenue.activeSubscribers}</p><div className="flex gap-2 mt-2"><Badge variant="secondary">mensual {revenue.byPlan.monthly}</Badge><Badge variant="secondary">anual {revenue.byPlan.annual}</Badge><Badge variant="secondary">lifetime {revenue.byPlan.lifetime}</Badge></div></CardContent></Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Status dos serviços</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Estado de los servicios</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s) => (
             <div key={s.name} className="rounded-lg border border-zinc-800 p-3">

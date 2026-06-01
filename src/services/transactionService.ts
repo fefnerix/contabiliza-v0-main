@@ -29,12 +29,13 @@ export const getTransactions = async (): Promise<Transaction[]> => {
       id: item.id,
       type: item.type as 'income' | 'expense',
       amount: item.amount,
-      category: item.category?.name || "Outros",
+      category: item.category?.name || "Otros",
       categoryIcon: item.category?.icon || "circle",
       categoryColor: item.category?.color || "#607D8B",
       description: item.description || "",
       date: item.date,
-      goalId: item.goal_id || undefined
+      goalId: item.goal_id || undefined,
+      created_at: item.created_at || undefined,
     }));
   } catch (error) {
     console.error("Error fetching transactions:", error);

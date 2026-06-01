@@ -16,9 +16,7 @@ export function getSupabaseEnvOrThrow(): { url: string; anonKey: string } {
   const anonKey = readViteEnv(import.meta.env.VITE_SUPABASE_ANON_KEY);
 
   if (!url || !anonKey) {
-    throw new Error(
-      "Missing Supabase environment variables. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
-    );
+    throw new Error("Missing Supabase env vars");
   }
 
   return { url, anonKey };

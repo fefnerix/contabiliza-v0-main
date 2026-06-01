@@ -7,6 +7,7 @@ import TransactionList from '@/components/common/TransactionList';
 import UpcomingExpensesAlert from '@/components/dashboard/UpcomingExpensesAlert';
 import GoalNavigation from '@/components/common/GoalNavigation';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
+import { TransactionListSkeleton } from '@/components/dashboard/TransactionListSkeleton';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Goal, ScheduledTransaction } from '@/types';
 import { motion } from 'framer-motion';
@@ -18,6 +19,7 @@ interface DashboardContentProps {
   currentGoalIndex: number;
   currentMonth: Date;
   hideValues: boolean;
+  isLoading?: boolean;
   onGoalChange: (index: number) => void;
   onEditTransaction: (transaction: any) => void;
   onDeleteTransaction: (id: string) => void;
@@ -31,6 +33,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   currentGoalIndex,
   currentMonth,
   hideValues,
+  isLoading = false,
   onGoalChange,
   onEditTransaction,
   onDeleteTransaction,
@@ -66,11 +69,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
 
       {/* Seção de gráficos */}
       <motion.div variants={itemVariants}>
-        <DashboardCharts 
-          currentMonth={currentMonth} 
-          hideValues={hideValues}
-          monthTransactions={filteredTransactions}
-        />
+        <DashboardCharts currentMonth={currentMonth} hideValues={hideValues} />
       </motion.div>
 
       {/* Transações recentes */}
@@ -83,12 +82,16 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                 <Link to="/transactions">{t('common.viewAll')}</Link>
               </Button>
             </div>
-            <TransactionList 
-              transactions={filteredTransactions.slice(0, 5)} 
-              onEdit={onEditTransaction} 
-              onDelete={onDeleteTransaction} 
-              hideValues={hideValues} 
-            />
+            {isLoading ? (
+              <TransactionListSkeleton rows={5} />
+            ) : (
+              <TransactionList
+                transactions={filteredTransactions.slice(0, 5)}
+                onEdit={onEditTransaction}
+                onDelete={onDeleteTransaction}
+                hideValues={hideValues}
+              />
+            )}
             {filteredTransactions.length > 5 && (
               <div className="mt-6 text-center">
                 <Button variant="outline" asChild>

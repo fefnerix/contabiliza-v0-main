@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { getPlanTypeFromPriceId } from '@/utils/subscriptionUtils';
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
-import { toE164WhatsApp } from '@/utils/phone';
-import CountryPhoneInput from '@/components/common/CountryPhoneInput';
 import { trackFacebookEvents } from '@/utils/facebookTracking';
 import { usePreferences, Currency, Language } from '@/contexts/PreferencesContext';
-import { COUNTRIES, getCountryTimezone } from '@/data/countries';
-import { getOnboardingCountry, normalizeWhatsAppDigits } from '@/constants/onboardingCountries';
+import {
+  ALL_ONBOARDING_COUNTRIES,
+  getOnboardingCountry,
+  normalizeWhatsAppDigits,
+} from '@/constants/onboardingCountries';
 import { clearOnboardingDone } from '@/utils/onboarding';
-import { Eye, EyeOff } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Eye, EyeOff, PartyPopper } from 'lucide-react';
+
+const MVP_DEFAULT_COUNTRY = 'CO';
 
 const COUNTRY_DEFAULTS: Record<string, { timezone: string; language: Language; currency: Currency }> = {
   BR: { timezone: 'America/Sao_Paulo', language: 'pt', currency: 'BRL' },
@@ -33,7 +42,6 @@ const FALLBACK_COUNTRY_DEFAULTS: { timezone: string; language: Language; currenc
 };
 
 const RegisterPage = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { companyName, logoUrl, logoAltText } = useBrandingConfig();
@@ -51,98 +59,81 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
-  const [countryCode, setCountryCode] = useState('BR');
+  const [countryCode, setCountryCode] = useState(MVP_DEFAULT_COUNTRY);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Estados para validação
+
   const [emailError, setEmailError] = useState<string | null>(null);
   const [whatsappError, setWhatsappError] = useState<string | null>(null);
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const [isValidatingWhatsapp, setIsValidatingWhatsapp] = useState(false);
 
-  const priceId = searchParams.get('priceId');
+  useEffect(() => {
+    const meta = getOnboardingCountry(MVP_DEFAULT_COUNTRY);
+    if (!meta) return;
+    setCountry(meta.code);
+    setTimezone(meta.timezone);
+    setLanguage(meta.language);
+    setCurrency(meta.currency);
+    try {
+      localStorage.setItem('currency', meta.currency);
+      localStorage.setItem('userCurrency', meta.currency);
+      localStorage.setItem('user_currency_symbol', meta.symbol);
+    } catch {
+      /* ignore */
+    }
+  }, [setCountry, setTimezone, setLanguage, setCurrency]);
 
-  // Função para aguardar uma sessão válida ser estabelecida
-  const waitForValidSession = async (maxRetries = 20, retryDelay = 1500): Promise<any> => {
-    console.log(`[waitForValidSession] Iniciando com ${maxRetries} tentativas a cada ${retryDelay}ms`);
-    
+  const waitForValidSession = async (maxRetries = 10, retryDelay = 1000): Promise<void> => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      console.log(`[waitForValidSession] Tentativa ${attempt}/${maxRetries} - Verificando sessão...`);
-      
-      try {
-        // Verificação dupla: getSession E getUser
-        const [sessionResult, userResult] = await Promise.all([
-          supabase.auth.getSession(),
-          supabase.auth.getUser()
-        ]);
-        
-        const { data: { session }, error: sessionError } = sessionResult;
-        const { data: { user }, error: userError } = userResult;
-        
-        if (sessionError) {
-          console.error(`[waitForValidSession] Erro de sessão na tentativa ${attempt}:`, sessionError);
-          if (attempt === maxRetries) throw sessionError;
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          continue;
-        }
-        
-        if (userError) {
-          console.error(`[waitForValidSession] Erro de usuário na tentativa ${attempt}:`, userError);
-          if (attempt === maxRetries) throw userError;
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          continue;
-        }
-        
-        // Verificar se temos sessão E usuário válidos
-        if (session?.access_token && session?.user?.id && user?.id) {
-          console.log(`[waitForValidSession] ✅ Sessão e usuário válidos encontrados na tentativa ${attempt}:`, {
-            sessionUserId: session.user.id,
-            userDataId: user.id,
-            email: session.user.email,
-            tokenLength: session.access_token.length,
-            userConfirmed: user.email_confirmed_at ? 'Sim' : 'Não'
-          });
-          return session;
-        }
-        
-        console.log(`[waitForValidSession] ⏳ Tentativa ${attempt}: Aguardando sessão e usuário serem estabelecidos`, {
-          hasSession: !!session,
-          hasToken: !!session?.access_token,
-          hasSessionUser: !!session?.user?.id,
-          hasUser: !!user?.id
-        });
-        
-        // Tentar refresh da sessão nas últimas tentativas
-        if (attempt > maxRetries - 3) {
-          console.log(`[waitForValidSession] 🔄 Tentativa ${attempt}: Fazendo refresh da sessão`);
-          await supabase.auth.refreshSession();
-        }
-        
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-        }
-      } catch (error) {
-        console.error(`[waitForValidSession] Erro inesperado na tentativa ${attempt}:`, error);
-        if (attempt === maxRetries) throw error;
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      const [sessionResult, userResult] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.auth.getUser(),
+      ]);
+
+      const { data: { session }, error: sessionError } = sessionResult;
+      const { data: { user }, error: userError } = userResult;
+
+      if (sessionError && attempt === maxRetries) throw sessionError;
+      if (userError && attempt === maxRetries) throw userError;
+
+      if (session?.access_token && session?.user?.id && user?.id) {
+        return;
+      }
+
+      if (attempt > maxRetries - 2) {
+        await supabase.auth.refreshSession();
+      }
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
     }
-    
-    throw new Error('Timeout: No fue posible establecer una sesión válida después de 30 segundos');
+
+    throw new Error('No fue posible establecer una sesión válida.');
   };
 
-  // Função para lidar com a mudança no campo de WhatsApp
   const handleWhatsappChange = (value: string) => {
     setWhatsapp(value);
-    // Limpar erro quando usuário começar a digitar
-    if (whatsappError) {
-      setWhatsappError(null);
-    }
+    if (whatsappError) setWhatsappError(null);
   };
 
   const handleCountryChange = (newCountryCode: string) => {
     setCountryCode(newCountryCode);
+    const onboarding = getOnboardingCountry(newCountryCode);
+    if (onboarding) {
+      setCountry(onboarding.code);
+      setTimezone(onboarding.timezone);
+      setLanguage(onboarding.language);
+      setCurrency(onboarding.currency);
+      try {
+        localStorage.setItem('currency', onboarding.currency);
+        localStorage.setItem('userCurrency', onboarding.currency);
+        localStorage.setItem('user_currency_symbol', onboarding.symbol);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
     const defaults = COUNTRY_DEFAULTS[newCountryCode] || FALLBACK_COUNTRY_DEFAULTS;
     setCountry(newCountryCode);
     setTimezone(defaults.timezone);
@@ -150,7 +141,15 @@ const RegisterPage = () => {
     setCurrency(defaults.currency);
   };
 
-  // Função para validar email em tempo real
+  const getMvpPhoneDigits = () => {
+    const meta = getOnboardingCountry(countryCode) ?? getOnboardingCountry(MVP_DEFAULT_COUNTRY);
+    if (!meta) return whatsapp.replace(/\D/g, '');
+    return normalizeWhatsAppDigits(whatsapp, meta);
+  };
+
+  const selectedOnboardingCountry =
+    getOnboardingCountry(countryCode) ?? getOnboardingCountry(MVP_DEFAULT_COUNTRY);
+
   const validateEmail = async (emailValue: string) => {
     if (!emailValue.trim()) {
       setEmailError(null);
@@ -162,43 +161,29 @@ const RegisterPage = () => {
 
     try {
       const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-registration', {
-        body: {
-          email: emailValue.trim(),
-          phone: null // Só validar email
-        }
+        body: { email: emailValue.trim(), phone: null },
       });
 
       if (validationError) {
-        console.error('Erro na validação de email:', validationError);
-        setEmailError('Erro de conexão. Tente novamente.');
+        setEmailError('Error de conexión. Intenta de nuevo.');
         return;
       }
 
       if (!validationData?.success) {
-        const emailErrors = validationData?.errors?.filter((error: string) => 
-          error.includes('email') || error.includes('Email')
+        const emailErrors = validationData?.errors?.filter((err: string) =>
+          err.includes('email') || err.includes('Email'),
         ) || [];
-        
-        if (emailErrors.length > 0) {
-          setEmailError(emailErrors[0]);
-        } else {
-          setEmailError('Este e-mail já possui cadastro no sistema.');
-        }
-      } else {
-        setEmailError(null);
+        setEmailError(emailErrors[0] ?? 'Este correo ya está registrado en el sistema.');
       }
-    } catch (error) {
-      console.error('Erro na validação de email:', error);
-      setEmailError('Erro de conexão. Tente novamente.');
+    } catch {
+      setEmailError('Error de conexión. Intenta de nuevo.');
     } finally {
       setIsValidatingEmail(false);
     }
   };
 
-  // Função para validar WhatsApp em tempo real
   const validateWhatsapp = async (whatsappValue: string) => {
     const formattedPhone = whatsappValue.replace(/\D/g, '');
-    
     if (!formattedPhone) {
       setWhatsappError(null);
       return;
@@ -209,54 +194,49 @@ const RegisterPage = () => {
 
     try {
       const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-registration', {
-        body: {
-          email: null, // Só validar WhatsApp
-          phone: formattedPhone
-        }
+        body: { email: null, phone: formattedPhone },
       });
 
       if (validationError) {
-        console.error('Erro na validação de WhatsApp:', validationError);
-        setWhatsappError('Erro de conexão. Tente novamente.');
+        setWhatsappError('Error de conexión. Intenta de nuevo.');
         return;
       }
 
       if (!validationData?.success) {
-        const whatsappErrors = validationData?.errors?.filter((error: string) => 
-          error.includes('WhatsApp') || error.includes('telefone') || error.includes('número')
+        const whatsappErrors = validationData?.errors?.filter((err: string) =>
+          err.includes('WhatsApp') || err.includes('telefone') || err.includes('número'),
         ) || [];
-        
-        if (whatsappErrors.length > 0) {
-          setWhatsappError(whatsappErrors[0]);
-        } else {
-          setWhatsappError('Este WhatsApp já possui cadastro no sistema.');
-        }
-      } else {
-        setWhatsappError(null);
+        setWhatsappError(whatsappErrors[0] ?? 'Este WhatsApp ya está registrado en el sistema.');
       }
-    } catch (error) {
-      console.error('Erro na validação de WhatsApp:', error);
-      setWhatsappError('Erro de conexão. Tente novamente.');
+    } catch {
+      setWhatsappError('Error de conexión. Intenta de nuevo.');
     } finally {
       setIsValidatingWhatsapp(false);
     }
   };
 
-  // Handlers para onBlur
   const handleEmailBlur = () => {
-    if (email.trim()) {
-      validateEmail(email);
-    }
+    if (email.trim()) validateEmail(email);
   };
 
   const handleWhatsappBlur = () => {
-    if (whatsapp.trim()) {
-      validateWhatsapp(whatsapp);
-    }
+    if (whatsapp.trim()) validateWhatsapp(getMvpPhoneDigits());
   };
 
-  const handleFreeRegistration = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
     const formElement = document.getElementById('register-form');
+    formElement?.classList.add('form-loading');
+
+    if (emailError || whatsappError) {
+      setError('Por favor corrige los errores en los campos antes de continuar.');
+      setIsLoading(false);
+      formElement?.classList.remove('form-loading');
+      return;
+    }
 
     if (password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.');
@@ -272,7 +252,7 @@ const RegisterPage = () => {
     }
 
     const countryMeta =
-      getOnboardingCountry(countryCode) ?? getOnboardingCountry('BR');
+      getOnboardingCountry(countryCode) ?? getOnboardingCountry(MVP_DEFAULT_COUNTRY);
     if (!countryMeta) {
       setError('Selecciona un país válido.');
       setIsLoading(false);
@@ -300,18 +280,11 @@ const RegisterPage = () => {
 
       if (signUpError) {
         const msg = signUpError.message ?? '';
-        if (
-          msg.includes('already registered') ||
-          msg.includes('User already registered')
-        ) {
-          setError(
-            'Este correo ya está registrado. Inicia sesión en /login o recupera tu contraseña.'
-          );
+        if (msg.includes('already registered') || msg.includes('User already registered')) {
+          setError('Este correo ya está registrado. Inicia sesión en /login o recupera tu contraseña.');
         } else {
           setError(msg || 'No fue posible crear la cuenta.');
         }
-        setIsLoading(false);
-        formElement?.classList.remove('form-loading');
         return;
       }
 
@@ -319,7 +292,7 @@ const RegisterPage = () => {
         throw new Error('Usuario no retornado después del registro.');
       }
 
-      await waitForValidSession(10, 1000).catch(async () => {
+      await waitForValidSession().catch(async () => {
         const { error: loginError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -327,9 +300,7 @@ const RegisterPage = () => {
         if (loginError) throw loginError;
       });
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
         await supabase.from('poupeja_users').upsert({
@@ -348,6 +319,8 @@ const RegisterPage = () => {
       setLanguage(countryMeta.language);
       setCurrency(countryMeta.currency);
       try {
+        localStorage.setItem('currency', countryMeta.currency);
+        localStorage.setItem('userCurrency', countryMeta.currency);
         localStorage.setItem('user_currency_symbol', countryMeta.symbol);
         localStorage.setItem('user_country', countryMeta.code);
       } catch {
@@ -362,219 +335,21 @@ const RegisterPage = () => {
       });
       navigate('/onboarding', { replace: true });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error desconocido.';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Error desconocido.');
     } finally {
       setIsLoading(false);
       formElement?.classList.remove('form-loading');
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    
-    // Verificar se há erros de validação em tempo real
-    if (emailError || whatsappError) {
-      setError('Por favor, corrija os erros nos campos antes de continuar.');
-      setIsLoading(false);
-      return;
-    }
-    
-    // Adicionar classe de loading ao formulário
-    const formElement = document.getElementById('register-form');
-    if (formElement) {
-      formElement.classList.add('form-loading');
-    }
-
-    if (!priceId) {
-      await handleFreeRegistration();
-      return;
-    }
-  
-    try {
-      // Normaliza o número de telefone para E.164
-      const formattedPhone = whatsapp ? toE164WhatsApp(whatsapp) : '';
-  
-      console.log('Iniciando processo de registro...');
-
-      // Sugere preferências padrão com base no país escolhido no cadastro.
-      const countryInfo = COUNTRIES[countryCode];
-      const defaults = COUNTRY_DEFAULTS[countryCode] || FALLBACK_COUNTRY_DEFAULTS;
-      const suggestedLanguage = defaults.language || (countryInfo?.language as Language) || FALLBACK_COUNTRY_DEFAULTS.language;
-      const suggestedCurrency = defaults.currency || (countryInfo?.currency as Currency) || FALLBACK_COUNTRY_DEFAULTS.currency;
-      const suggestedTimezone = defaults.timezone || getCountryTimezone(countryCode) || FALLBACK_COUNTRY_DEFAULTS.timezone;
-      setCountry(countryCode);
-      setTimezone(suggestedTimezone);
-      setLanguage(suggestedLanguage);
-      setCurrency(suggestedCurrency);
-      
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: fullName,
-            full_name: fullName,
-            phone: formattedPhone,
-            country: countryCode,
-            timezone: suggestedTimezone,
-            language: suggestedLanguage,
-            currency: suggestedCurrency,
-          },
-        },
-      });
-  
-      if (signUpError) {
-        throw signUpError;
-      }
-
-      if (!signUpData.user) {
-        throw new Error('Usuario no retornado después del registro.');
-      }
-
-      console.log('Usuário criado com sucesso');
-      
-      // Rastrear evento de registro no Facebook Pixel
-      trackFacebookEvents.completeRegistration('email');
-      
-      // Mostrar feedback de progresso
-      toast({
-        title: "¡Cuenta creada con éxito!",
-        description: "Esperando establecer sesión...",
-      });
-
-      // Aguardar que a sessão seja estabelecida
-      console.log('🚀 Aguardando estabelecer sessão após registro...');
-      let validSession;
-      try {
-        validSession = await waitForValidSession(20, 1500);
-        console.log('✅ Sessão estabelecida com sucesso!');
-      } catch (sessionError) {
-        console.error('❌ Erro ao aguardar sessão:', sessionError);
-        
-        // FALLBACK: Tentar login automático
-        console.log('🔄 Tentando fallback com login automático...');
-        try {
-          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          if (loginError) throw loginError;
-          
-          if (loginData.session) {
-            console.log('✅ Login automático bem-sucedido!');
-            validSession = loginData.session;
-            
-            toast({
-              title: "¡Cuenta creada e inicio de sesión realizado!",
-              description: "Procediendo al checkout...",
-            });
-          } else {
-            throw new Error('Inicio de sesión automático falló');
-          }
-        } catch (loginError) {
-          console.error('❌ Fallback de login também falhou:', loginError);
-          
-          // Último recurso: redirecionar para login manual
-          toast({
-            title: "¡Cuenta creada con éxito!",
-            description: "Redirigiendo para iniciar sesión...",
-          });
-          
-          setTimeout(() => {
-            navigate('/login', { 
-              state: { 
-                email, 
-                message: "¡Tu cuenta fue creada! Inicia sesión para continuar con el pago." 
-              } 
-            });
-          }, 2000);
-          return;
-        }
-      }
-
-      // Verificar se temos uma sessão válida
-      if (!validSession?.access_token || !validSession?.user?.id) {
-        throw new Error('Sesión inválida después del registro. Intenta iniciar sesión manualmente.');
-      }
-
-      console.log('Sessão estabelecida com sucesso, preparando checkout...');
-      
-      // Converter priceId para planType
-      const planType = await getPlanTypeFromPriceId(priceId);
-      
-      if (!planType) {
-        throw new Error("Tipo de plan inválido. Verifica la configuración.");
-      }
-      
-      // Atualizar feedback de progresso
-      toast({
-        title: "¡Sesión establecida!",
-        description: "Preparando checkout...",
-      });
-      
-      // Chamar a Supabase Function para criar a sessão de checkout do Stripe
-      console.log('Chamando create-checkout-session com sessão válida...');
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { 
-          planType,
-          successUrl: `${window.location.origin}/payment-success?email=${encodeURIComponent(validSession.user.email || '')}`,
-          cancelUrl: `${window.location.origin}/register?canceled=true`
-        },
-        headers: {
-          Authorization: `Bearer ${validSession.access_token}`,
-        }
-      });
-      
-      if (functionError) {
-        console.error('Erro na função de checkout:', functionError);
-        throw new Error(`Error en el checkout: ${functionError.message}`);
-      }
-
-      console.log('Dados retornados pela função create-checkout-session:', functionData);
-
-      if (functionData && functionData.url) {
-        console.log('Redirecionando para:', functionData.url);
-        
-        // Garantir que o overlay de carregamento permaneça visível
-        document.body.classList.add('overflow-hidden');
-        
-        // Adicionar um pequeno atraso antes do redirecionamento para garantir que o overlay seja exibido
-        setTimeout(() => {
-          window.location.href = functionData.url;
-        }, 500);
-        
-        return;
-      } else {
-        throw new Error('No fue posible obtener la URL de checkout.');
-      }
-    } catch (err: any) {
-      console.error('Erro no processo de registro ou checkout:', err);
-      setError(err.message || 'Ocurrió un error desconocido.');
-      setIsLoading(false);
-      
-      // Remover classe de loading em caso de erro
-      const formElement = document.getElementById('register-form');
-      if (formElement) {
-        formElement.classList.remove('form-loading');
-      }
-    }
-  };
-
-  // Adicione este componente dentro do RegisterPage, antes do return
   const LoadingOverlay = () => {
     if (!isLoading) return null;
-    
+
     return (
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-sm font-medium">
-            {isLoading && error ? 'Procesando...' : 'Creando cuenta y preparando checkout...'}
-          </p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm font-medium">Activando tu acceso gratuito...</p>
         </div>
       </div>
     );
@@ -582,33 +357,26 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background flex flex-col items-center justify-center p-4">
-      {/* Renderizar o LoadingOverlay fora do container do formulário */}
       {isLoading && <LoadingOverlay />}
-      
-      {/* Container do formulário com largura máxima e sombra */}
+
       <div className="w-full max-w-md bg-card p-8 rounded-xl shadow-2xl relative">
-        {/* Logo e Título Centralizados */}
         <div className="flex flex-col items-center mb-8">
-          {/* Logo */}
           <div className="flex items-center space-x-2 mb-4">
-            <img 
-              src={logoUrl} 
-              alt={logoAltText}
-              className="h-12 w-auto"
-            />
+            <img src={logoUrl} alt={logoAltText} className="h-12 w-auto" />
             <span className="text-2xl font-bold text-primary">{companyName}</span>
           </div>
-          <h1 className="text-3xl font-bold text-center text-foreground">Crear Cuenta</h1>
-          <p className="text-muted-foreground text-center mt-2">
-            {priceId
-              ? 'Completa los campos para crear tu cuenta y continuar al pago.'
-              : 'Registro gratuito — activa tu cuenta en pocos pasos.'}
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
+            <PartyPopper className="h-7 w-7 text-primary" aria-hidden />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-foreground leading-tight">
+            ¡Felicidades! Ganaste acceso gratis a {companyName || 'Contabiliza'}
+          </h1>
+          <p className="text-muted-foreground text-center mt-3 text-sm sm:text-base">
+            Completa tus datos para activar tu cuenta y empezar a registrar tus finanzas por WhatsApp.
           </p>
         </div>
 
-        {error && (
-          <p className="text-sm text-center text-red-600 mb-4">{error}</p>
-        )}
+        {error && <p className="text-sm text-center text-red-600 mb-4">{error}</p>}
 
         <form id="register-form" onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -627,25 +395,54 @@ const RegisterPage = () => {
           </div>
 
           <div>
-            <Label htmlFor="whatsapp">País y WhatsApp</Label>
-            <CountryPhoneInput
-              value={whatsapp}
-              onChange={handleWhatsappChange}
-              onCountryChange={handleCountryChange}
-              placeholder="número — ej.: 11 99999-9999"
-              required
-              error={whatsappError || undefined}
-            />
+            <Label htmlFor="country">País</Label>
+            <Select value={countryCode} onValueChange={handleCountryChange} required>
+              <SelectTrigger id="country" className="mt-1">
+                <SelectValue placeholder="Selecciona tu país" />
+              </SelectTrigger>
+              <SelectContent>
+                {ALL_ONBOARDING_COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    <span className="flex items-center gap-2">
+                      <span>{c.flag}</span>
+                      <span>{c.name}</span>
+                      <span className="text-muted-foreground text-xs">({c.phoneCode})</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Teléfono / WhatsApp</Label>
+            <div className="mt-1 flex rounded-md border border-input bg-background shadow-sm focus-within:ring-2 focus-within:ring-ring">
+              <span className="inline-flex items-center gap-1.5 border-r border-input bg-muted/50 px-3 text-sm text-muted-foreground shrink-0">
+                <span aria-hidden>{selectedOnboardingCountry?.flag}</span>
+                <span className="font-medium tabular-nums">
+                  {selectedOnboardingCountry?.phoneCode ?? '+57'}
+                </span>
+              </span>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required
+                placeholder="300 1234567"
+                value={whatsapp}
+                onChange={(e) => handleWhatsappChange(e.target.value)}
+                onBlur={handleWhatsappBlur}
+                className="border-0 shadow-none focus-visible:ring-0 rounded-l-none"
+              />
+            </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              El código del país se completa al elegir tu país. Este número activa el asistente
-              por WhatsApp.
+              Usaremos este número para activar tu asistente por WhatsApp.
             </p>
             {isValidatingWhatsapp && (
-              <p className="text-sm text-blue-600 mt-1">Validando WhatsApp...</p>
+              <p className="text-sm text-blue-600 mt-1">Validando teléfono...</p>
             )}
-            {whatsappError && (
-              <p className="text-sm text-red-600 mt-1">{whatsappError}</p>
-            )}
+            {whatsappError && <p className="text-sm text-red-600 mt-1">{whatsappError}</p>}
           </div>
 
           <div>
@@ -660,9 +457,7 @@ const RegisterPage = () => {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                if (emailError) {
-                  setEmailError(null);
-                }
+                if (emailError) setEmailError(null);
               }}
               onBlur={handleEmailBlur}
               className={`mt-1 ${emailError ? 'border-red-500 focus:border-red-500' : ''}`}
@@ -670,9 +465,7 @@ const RegisterPage = () => {
             {isValidatingEmail && (
               <p className="text-sm text-blue-600 mt-1">Validando email...</p>
             )}
-            {emailError && (
-              <p className="text-sm text-red-600 mt-1">{emailError}</p>
-            )}
+            {emailError && <p className="text-sm text-red-600 mt-1">{emailError}</p>}
           </div>
 
           <div>
@@ -701,44 +494,34 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          {!priceId && (
-            <div>
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-              <div className="relative mt-1">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  placeholder="Repite tu contraseña"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  onClick={() => setShowConfirmPassword((v) => !v)}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+          <div>
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <div className="relative mt-1">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                placeholder="Repite tu contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-          )}
+          </div>
 
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading
-                ? 'Creando cuenta...'
-                : priceId
-                  ? 'Crear Cuenta e Ir a Pago'
-                  : 'Crear cuenta gratis'}
+              {isLoading ? 'Procesando...' : 'Activar mi acceso gratuito'}
             </Button>
           </div>
         </form>

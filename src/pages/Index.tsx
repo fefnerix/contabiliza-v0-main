@@ -169,7 +169,7 @@ const Index = () => {
               totalExpenses={totalExpenses}
               balance={balance}
               hideValues={hideValues}
-              isLoading={!!user?.id && isLoading}
+              isLoading={isLoading}
               onNavigateToTransactionType={navigateToTransactionType}
             />
           </motion.div>
@@ -181,6 +181,7 @@ const Index = () => {
             currentGoalIndex={currentGoalIndex}
             currentMonth={currentMonth}
             hideValues={hideValues}
+            isLoading={isLoading}
             onGoalChange={setCurrentGoalIndex}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}

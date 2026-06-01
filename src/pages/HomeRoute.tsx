@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { OnboardingSplash } from "@/components/onboarding/OnboardingSplash";
+import { OnboardingSplash } from "@/components/OnboardingSplash";
 import { useAppContext } from "@/contexts/AppContext";
 import { isOnboardingDone } from "@/utils/onboarding";
 

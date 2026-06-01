@@ -7,47 +7,71 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { usePreferences, CountryCode, Language } from '@/contexts/PreferencesContext';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePreferences, CountryCode, Currency, Language } from '@/contexts/PreferencesContext';
 import { Flag, Globe, MapPin } from 'lucide-react';
-import { COUNTRIES, getCountryTimezone } from '@/data/countries';
+import { COUNTRIES } from '@/data/countries';
+
+const CURRENCY_DISPLAY: Partial<Record<Currency, string>> = {
+  USD: 'USD ($)',
+  MXN: 'MXN ($)',
+  ARS: 'ARS ($)',
+  CLP: 'CLP ($)',
+  COP: 'COP ($)',
+  PEN: 'PEN (S/.)',
+  UYU: 'UYU ($)',
+  PYG: 'PYG (₲)',
+  BOB: 'BOB (Bs.)',
+  CRC: 'CRC (₡)',
+  GTQ: 'GTQ (Q)',
+  DOP: 'DOP (RD$)',
+  PAB: 'PAB (B/.)',
+  NIO: 'NIO (C$)',
+  HNL: 'HNL (L)',
+  SVC: 'SVC ($)',
+  EUR: 'EUR (€)',
+  GBP: 'GBP (£)',
+  CHF: 'CHF (CHF)',
+  SEK: 'SEK (kr)',
+  NOK: 'NOK (kr)',
+  DKK: 'DKK (kr)',
+  PLN: 'PLN (zł)',
+  BRL: 'BRL (R$)',
+};
 
 const LanguageCurrencySelector: React.FC = () => {
-  const { currency, setCurrency, language, setLanguage, country, setCountry, timezone, setTimezone, t } = usePreferences();
-
-  const latinAmericaCountryCodes: CountryCode[] = [
-    'BR', 'AR', 'CO', 'MX', 'CL', 'PY', 'PE', 'VE', 'UY', 'EC',
-    'BO', 'CU', 'DO', 'PA', 'CR', 'GT', 'SV', 'HN', 'NI',
-  ];
-
-  const handleCountryChange = (newCountry: string) => {
-    setCountry(newCountry);
-    setTimezone(getCountryTimezone(newCountry));
-  };
+  const { currency, language, setLanguage, country, timezone, t } = usePreferences();
+  const currencyLabel = CURRENCY_DISPLAY[currency] ?? currency;
+  const countryLabel = COUNTRIES[country as CountryCode]?.name || country;
 
   return (
     <div className="flex flex-col space-y-4">
-      {/* País */}
+      {/* País — bloqueado após cadastro */}
       <div className="flex flex-col space-y-2">
-        <label htmlFor="country-select" className="text-sm font-medium">
+        <label htmlFor="country-display" className="text-sm font-medium">
           {t('settings.country', 'País')}
         </label>
-        <Select value={country} onValueChange={handleCountryChange}>
-          <SelectTrigger id="country-select" className="w-[220px]">
-            <MapPin className="mr-2 h-4 w-4" />
-            <SelectValue placeholder={t('settings.country', 'País')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {latinAmericaCountryCodes.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {COUNTRIES[code]?.name || code}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          {t('settings.countryHelp', 'Sua zona horária atualiza automaticamente')} ({timezone})
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative w-[220px]">
+              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                id="country-display"
+                readOnly
+                disabled
+                value={countryLabel}
+                className="pl-9 cursor-not-allowed bg-muted/60"
+                aria-describedby="country-locked-hint"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('settings.countryLocked', 'El país no puede cambiarse después del registro')}</p>
+          </TooltipContent>
+        </Tooltip>
+        <p id="country-locked-hint" className="text-xs text-muted-foreground">
+          {t('settings.countryHelp', 'La zona horaria se configura según tu país de registro')} ({timezone})
         </p>
       </div>
 
@@ -71,54 +95,32 @@ const LanguageCurrencySelector: React.FC = () => {
         </Select>
       </div>
 
-      {/* Moeda */}
+      {/* Moeda — bloqueada após cadastro */}
       <div className="flex flex-col space-y-2">
-        <label htmlFor="currency-select" className="text-sm font-medium">
+        <label htmlFor="currency-display" className="text-sm font-medium">
           {t('settings.currency')}
         </label>
-        <Select value={currency} onValueChange={setCurrency}>
-          <SelectTrigger id="currency-select" className="w-[220px]">
-            <Flag className="mr-2 h-4 w-4" />
-            <SelectValue placeholder={t('settings.currency')} />
-          </SelectTrigger>
-          <SelectContent>
-            {/* Global (deixe USD visível no topo) */}
-            <SelectGroup>
-              <SelectItem value="USD">USD ($)</SelectItem>
-            </SelectGroup>
-
-            {/* América Latina */}
-            <SelectGroup>
-              <SelectItem value="MXN">MXN ($)</SelectItem>
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="ARS">ARS ($)</SelectItem>
-              <SelectItem value="CLP">CLP ($)</SelectItem>
-              <SelectItem value="COP">COP ($)</SelectItem>
-              <SelectItem value="PEN">PEN (S/.)</SelectItem>
-              <SelectItem value="UYU">UYU ($)</SelectItem>
-              <SelectItem value="PYG">PYG (₲)</SelectItem>
-              <SelectItem value="BOB">BOB (Bs.)</SelectItem>
-              <SelectItem value="CRC">CRC (₡)</SelectItem>
-              <SelectItem value="GTQ">GTQ (Q)</SelectItem>
-              <SelectItem value="DOP">DOP (RD$)</SelectItem>
-              <SelectItem value="PAB">PAB (B/.)</SelectItem>
-              <SelectItem value="NIO">NIO (C$)</SelectItem>
-              <SelectItem value="HNL">HNL (L)</SelectItem>
-              <SelectItem value="SVC">SVC ($)</SelectItem>
-            </SelectGroup>
-
-            {/* Europa */}
-            <SelectGroup>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-              <SelectItem value="GBP">GBP (£)</SelectItem>
-              <SelectItem value="CHF">CHF (CHF)</SelectItem>
-              <SelectItem value="SEK">SEK (kr)</SelectItem>
-              <SelectItem value="NOK">NOK (kr)</SelectItem>
-              <SelectItem value="DKK">DKK (kr)</SelectItem>
-              <SelectItem value="PLN">PLN (zł)</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative w-[220px]">
+              <Flag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                id="currency-display"
+                readOnly
+                disabled
+                value={currencyLabel}
+                className="pl-9 cursor-not-allowed bg-muted/60"
+                aria-describedby="currency-locked-hint"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('settings.currencyLocked', 'La moneda no puede cambiarse después del registro')}</p>
+          </TooltipContent>
+        </Tooltip>
+        <p id="currency-locked-hint" className="text-xs text-muted-foreground">
+          {t('settings.currencyLocked', 'La moneda no puede cambiarse después del registro')}
+        </p>
       </div>
     </div>
   );

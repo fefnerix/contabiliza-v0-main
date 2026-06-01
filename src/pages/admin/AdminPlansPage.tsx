@@ -312,7 +312,7 @@ const AdminPlansPage = () => {
 
       <AlertDialog open={!!deletePlanId} onOpenChange={(o) => !o && setDeletePlanId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Deletar plano?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>¿Eliminar plan?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={async () => { if (!deletePlanId) return; await deletePlan(deletePlanId); setDeletePlanId(null); }}>Deletar</AlertDialogAction>
@@ -322,7 +322,7 @@ const AdminPlansPage = () => {
 
       <AlertDialog open={!!deleteCouponId} onOpenChange={(o) => !o && setDeleteCouponId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Deletar cupom?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>¿Eliminar cupón?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={async () => { if (!deleteCouponId) return; await deleteCoupon(deleteCouponId); setDeleteCouponId(null); }}>Deletar</AlertDialogAction>

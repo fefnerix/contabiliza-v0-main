@@ -46,8 +46,15 @@ export function useAdminAuth(): UseAdminAuthReturn {
           .eq("role", "admin")
           .maybeSingle();
 
+        let adminStatus = !roleError && roleData?.role === "admin";
+        if (!adminStatus) {
+          const { data: rpcAdmin } = await supabase.rpc("is_admin", {
+            user_id: session.user.id,
+          });
+          adminStatus = rpcAdmin === true;
+        }
+
         if (!cancelled) {
-          const adminStatus = !roleError && roleData?.role === "admin";
           setIsAdmin(adminStatus);
 
           if (adminStatus) {

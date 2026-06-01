@@ -104,7 +104,7 @@ const AdminCustomersPage = () => {
   );
 
   const planFilterButtons: Array<{ value: PlanFilter; label: string }> = [
-    { value: "all", label: "Todos os planos" },
+    { value: "all", label: "Todos los planes" },
     { value: "monthly", label: "Mensal" },
     { value: "annual", label: "Anual" },
     { value: "lifetime", label: "Lifetime" },
@@ -131,22 +131,22 @@ const AdminCustomersPage = () => {
       <div className="rounded-lg border border-zinc-800 p-4 space-y-3">
         <Input
           id="admin-customers-search"
-          placeholder="Buscar por email, nome ou telefone"
+          placeholder="Buscar por correo, nombre o teléfono"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
         <div className="flex flex-wrap gap-2">
           {statusFilterChip("all", "Todos")}
-          {statusFilterChip("active", "Ativo")}
-          {statusFilterChip("expiring", "Expirando (<7d)")}
+          {statusFilterChip("active", "Activo")}
+          {statusFilterChip("expiring", "Por expirar (<7d)")}
           {statusFilterChip("expired", "Expirado")}
           {statusFilterChip("trial", "Trial")}
-          {statusFilterChip("no_access", "Sem acesso")}
+          {statusFilterChip("no_access", "Sin acceso")}
         </div>
         <div className="flex flex-wrap gap-2">
-          {healthFilterChip("all", "Health: Todos")}
-          {healthFilterChip("healthy", "Saudável")}
-          {healthFilterChip("at_risk", "Em risco")}
+          {healthFilterChip("all", "Salud: Todos")}
+          {healthFilterChip("healthy", "Saludable")}
+          {healthFilterChip("at_risk", "En riesgo")}
           {healthFilterChip("critical", "Crítico")}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -171,18 +171,18 @@ const AdminCustomersPage = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Health</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Plano</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expira em</TableHead>
-                <TableHead>Último login</TableHead>
-                <TableHead>Cadastrado</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Correo</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Expira</TableHead>
+                <TableHead>Último acceso</TableHead>
+                <TableHead>Registro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!loading && customers.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-zinc-400">Nenhum cliente encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-zinc-400">No se encontraron clientes.</TableCell></TableRow>
               ) : null}
               {customers.map((customer) => {
                 const status = getCustomerStatus(customer);
@@ -207,7 +207,7 @@ const AdminCustomersPage = () => {
           <p className="text-sm text-zinc-400">{rangeLabel}</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => { const p = page - 1; setPage(p); fetchCustomers(undefined, p); }}>Anterior</Button>
-            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => { const p = page + 1; setPage(p); fetchCustomers(undefined, p); }}>Próxima</Button>
+            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => { const p = page + 1; setPage(p); fetchCustomers(undefined, p); }}>Siguiente</Button>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./index.css";
 import { registerSW } from "virtual:pwa-register";
 
@@ -32,5 +33,9 @@ const updateSW = registerSW({
 });
 
 export function mountApp(rootEl: HTMLElement) {
-  createRoot(rootEl).render(<App />);
+  createRoot(rootEl).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
 }

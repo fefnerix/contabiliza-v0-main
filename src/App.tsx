@@ -10,7 +10,6 @@ import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { SupabaseInitializer } from "@/components/common/SupabaseInitializer";
-import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ProtectedRoute, GuestRoute, OnboardingRoute } from "@/components/ProtectedRoute";
 import HomeRoute from "./pages/HomeRoute";
 import Index from "./pages/Index";
@@ -52,7 +51,6 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="contabiliza-ui-theme">
           <TooltipProvider>
@@ -216,7 +214,6 @@ function App() {
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>
-    </AppErrorBoundary>
   );
 }
 

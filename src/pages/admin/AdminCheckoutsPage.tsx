@@ -177,7 +177,7 @@ const AdminCheckoutsPage = () => {
           <CardHeader><CardTitle className="flex justify-between"><span className="flex items-center gap-2"><Webhook className="text-violet-500" />Webhook Genérico</span>{providerBadge("generic")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between"><span>ATIVO / INATIVO</span><Switch checked={providers.generic.enabled} onCheckedChange={(v) => toggleProvider("generic", v)} /></div>
-            <p className="text-xs text-zinc-400">Último evento: {providers.generic.lastEvent ? relative(providers.generic.lastEvent) : "Não configurado"}</p>
+            <p className="text-xs text-zinc-400">Último evento: {providers.generic.lastEvent ? relative(providers.generic.lastEvent) : "No configurado"}</p>
             <Accordion type="single" collapsible>
               <AccordionItem value="generic">
                 <AccordionTrigger>⚙️ Configurar</AccordionTrigger>

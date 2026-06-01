@@ -7,7 +7,7 @@ import {
   getGoals as fetchGoalsFromService,
   recalculateGoalAmounts as recalculateGoalAmountsService,
 } from '@/services/goalService';
-import { createLocalDate, toTransactionAmount } from '@/utils/transactionUtils';
+import { createLocalDate, sortTransactionsByDateDesc, toTransactionAmount } from '@/utils/transactionUtils';
 
 // Use database types directly from Supabase
 interface Category {
@@ -365,10 +365,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (!startDate || !endDate) return transactions;
 
-      return transactions.filter((transaction) => {
+      const filtered = transactions.filter((transaction) => {
         const transactionDateOnly = createLocalDate(transaction.date);
         return transactionDateOnly >= startDate && transactionDateOnly <= endDate;
       });
+      return sortTransactionsByDateDesc(filtered);
     },
     [state.timeRange, state.customStartDate, state.customEndDate]
   );

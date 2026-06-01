@@ -71,6 +71,51 @@ export type Database = {
         }
         Relationships: []
       }
+      poupeja_financial_profile: {
+        Row: {
+          biggest_challenge: string | null
+          completed_at: string | null
+          created_at: string | null
+          fixed_expenses: number | null
+          goal_12m: string | null
+          goal_amount: number | null
+          monthly_income: number | null
+          monthly_savings: number | null
+          total_debt: number | null
+          updated_at: string | null
+          user_id: string
+          variable_expenses: number | null
+        }
+        Insert: {
+          biggest_challenge?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          fixed_expenses?: number | null
+          goal_12m?: string | null
+          goal_amount?: number | null
+          monthly_income?: number | null
+          monthly_savings?: number | null
+          total_debt?: number | null
+          updated_at?: string | null
+          user_id: string
+          variable_expenses?: number | null
+        }
+        Update: {
+          biggest_challenge?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          fixed_expenses?: number | null
+          goal_12m?: string | null
+          goal_amount?: number | null
+          monthly_income?: number | null
+          monthly_savings?: number | null
+          total_debt?: number | null
+          updated_at?: string | null
+          user_id?: string
+          variable_expenses?: number | null
+        }
+        Relationships: []
+      }
       poupeja_goals: {
         Row: {
           color: string | null
@@ -521,6 +566,35 @@ export type Database = {
       get_file_public_url: {
         Args: { file_path: string }
         Returns: string
+      }
+      get_spending_by_category: {
+        Args: {
+          p_user_id: string
+          p_category_name?: string | null
+          p_date_from: string
+          p_date_to: string
+          p_type?: string | null
+        }
+        Returns: {
+          category_name: string
+          total_amount: number
+          transaction_count: number
+          avg_amount: number
+        }[]
+      }
+      get_spending_summary: {
+        Args: {
+          p_user_id: string
+          p_date_from: string
+          p_date_to: string
+        }
+        Returns: {
+          category_name: string
+          type: string
+          total_amount: number
+          percentage: number
+          transaction_count: number
+        }[]
       }
       get_setting: {
         Args: { p_category: string; p_key: string }

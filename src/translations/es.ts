@@ -434,7 +434,9 @@ export default {
     language: 'Idioma',
     currency: 'Moneda',
     country: 'País',
-    countryHelp: 'Tu zona horaria se actualiza automáticamente',
+    countryHelp: 'La zona horaria se configura según tu país de registro',
+    countryLocked: 'El país no puede cambiarse después del registro',
+    currencyLocked: 'La moneda no puede cambiarse después del registro',
     theme: 'Tema',
     editProfile: 'Editar perfil',
     logout: 'Cerrar sesión',
@@ -498,6 +500,7 @@ export default {
   },
   charts: {
     incomeVsExpenses: 'Ingresos vs Gastos',
+    noPeriodData: 'Sin datos para este período',
     expenseBreakdown: 'Desglose de gastos',
     monthlyTrend: 'Tendencia mensual',
     categoryBreakdown: 'Por categoría',
