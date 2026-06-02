@@ -1,12 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { OnboardingSplash } from "@/components/OnboardingSplash";
 import { useAppContext } from "@/contexts/AppContext";
-import { isOnboardingDone } from "@/utils/onboarding";
 
 export default function HomeRoute() {
-  const { user, isLoading } = useAppContext();
+  const { user, isLoading, activationFormSubmitted } = useAppContext();
 
-  if (isLoading) {
+  if (isLoading || (user && activationFormSubmitted === null)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
@@ -15,7 +14,7 @@ export default function HomeRoute() {
   }
 
   if (user) {
-    if (!isOnboardingDone()) return <Navigate to="/onboarding" replace />;
+    if (!activationFormSubmitted) return <Navigate to="/onboarding" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 

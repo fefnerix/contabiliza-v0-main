@@ -11,7 +11,7 @@ import { loginUser } from '@/services/authService';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { isOnboardingDone } from '@/utils/onboarding';
+import { syncOnboardingStatusFromDb } from '@/utils/onboarding';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -55,7 +55,8 @@ const LoginPage = () => {
         return;
       }
 
-      if (!isOnboardingDone()) {
+      const onboardingDone = await syncOnboardingStatusFromDb(userId);
+      if (!onboardingDone) {
         navigate('/onboarding', { replace: true });
         return;
       }
@@ -67,11 +68,8 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Error checking user role:', error);
-      if (!isOnboardingDone()) {
-        navigate('/onboarding', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      const onboardingDone = await syncOnboardingStatusFromDb(userId);
+      navigate(onboardingDone ? '/dashboard' : '/onboarding', { replace: true });
     }
   };
 

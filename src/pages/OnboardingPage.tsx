@@ -8,9 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/contexts/AppContext";
-import { markOnboardingDone } from "@/utils/onboarding";
+import { markOnboardingDoneCache } from "@/utils/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  type ActivationSubmitPayload,
+  saveActivationFormDraft,
+  submitActivationFormWithRetry,
+} from "@/services/activationFormService";
 
 type DebtItem = {
   name: string;
@@ -96,10 +101,33 @@ const CURRENCY_OPTIONS = [
   "Peso argentino (ARS)",
   "Peso chileno (CLP)",
   "Sol peruano (PEN)",
+  "Colón costarricense (CRC)",
   "Real brasileño (BRL)",
   "Euro (EUR)",
   "Otra (especifica cuál)",
 ];
+
+const COUNTRY_NAME_TO_CODE: Record<string, string> = {
+  Colombia: "CO",
+  México: "MX",
+  "Estados Unidos": "US",
+  España: "ES",
+  Chile: "CL",
+  Perú: "PE",
+  Argentina: "AR",
+  Ecuador: "EC",
+  Venezuela: "VE",
+  "República Dominicana": "DO",
+  "Costa Rica": "CR",
+  Panamá: "PA",
+  Guatemala: "GT",
+  Honduras: "HN",
+  "El Salvador": "SV",
+  Bolivia: "BO",
+  Paraguay: "PY",
+  Uruguay: "UY",
+  Brasil: "BR",
+};
 
 const COUNTRY_BY_CODE: Record<string, string> = {
   CO: "Colombia",
@@ -130,6 +158,7 @@ const CURRENCY_OPTION_BY_CODE: Record<string, string> = {
   ARS: "Peso argentino (ARS)",
   CLP: "Peso chileno (CLP)",
   PEN: "Sol peruano (PEN)",
+  CRC: "Colón costarricense (CRC)",
   BRL: "Real brasileño (BRL)",
   EUR: "Euro (EUR)",
 };
@@ -210,7 +239,7 @@ const sumNumbers = (...values: string[]) =>
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, refreshActivationFormStatus } = useAppContext();
   const [step, setStep] = useState(1);
   const [activeSection, setActiveSection] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -289,7 +318,22 @@ export default function OnboardingPage() {
   );
 
   const setField = (field: keyof ActivationFormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "currency") {
+        next.activationCurrency = value;
+      }
+      return next;
+    });
+  };
+
+  const resolveCurrencyLabel = (primary: string, other: string) =>
+    primary === "Otra (especifica cuál)" ? other.trim() : primary;
+
+  const resolveCurrencyCode = (primary: string, other: string): string => {
+    const label = resolveCurrencyLabel(primary, other);
+    const match = label.match(/\(([A-Z]{3})\)$/);
+    return match?.[1] ?? label;
   };
 
   const updateDebt = (idx: number, field: keyof DebtItem, value: string) => {
@@ -316,6 +360,71 @@ export default function OnboardingPage() {
     return requiredFields.some((k) => !String(form[k]).trim());
   };
 
+  const buildSubmitPayload = (): ActivationSubmitPayload => {
+    const selectedCurrency = resolveCurrencyLabel(form.currency, form.currencyOther);
+    const currencyCode = resolveCurrencyCode(form.currency, form.currencyOther);
+    const countryCode =
+      COUNTRY_NAME_TO_CODE[form.country] || form.country?.slice(0, 2).toUpperCase() || null;
+    const fixedExpenses = sumNumbers(
+      form.housingExpense,
+      form.servicesExpense,
+      form.educationExpense,
+      form.healthExpense,
+      form.subscriptionsExpense,
+      form.fixedOtherExpense
+    );
+    const variableExpenses = sumNumbers(
+      form.foodExpense,
+      form.transportExpense,
+      form.entertainmentExpense,
+      form.unexpectedExpense
+    );
+
+    return {
+      full_name: form.fullName.trim(),
+      email: form.email.trim(),
+      phone: form.whatsapp.trim(),
+      country: form.country,
+      country_code: countryCode,
+      currency: selectedCurrency,
+      currency_code: currencyCode,
+      monthly_income: parseOptionalNumber(form.personalMonthlyIncome),
+      goal_amount: parseOptionalNumber(form.targetSavedOrInvested12m),
+      total_debt: form.hasDebts === "Sí" ? totalDebtAmount : 0,
+      form_data: {
+        ...form,
+        currency: selectedCurrency,
+        activationCurrency: resolveCurrencyLabel(
+          form.activationCurrency,
+          form.activationCurrencyOther
+        ),
+        currencyCode,
+        countryCode,
+        debts: form.hasDebts === "Sí" ? debts : [],
+      },
+      financial_profile: {
+        monthly_income: parseOptionalNumber(form.personalMonthlyIncome),
+        fixed_expenses: fixedExpenses || null,
+        variable_expenses: variableExpenses || null,
+        total_debt: form.hasDebts === "Sí" ? totalDebtAmount : 0,
+        monthly_savings: parseOptionalNumber(form.monthlySavingsAmount),
+        goal_12m: form.targetReason.trim() || null,
+        goal_amount: parseOptionalNumber(form.targetSavedOrInvested12m),
+        biggest_challenge: form.biggestMoneyFrustration.trim() || null,
+      },
+    };
+  };
+
+  useEffect(() => {
+    if (step !== 2 || !user?.id || saving) return;
+    const timer = window.setTimeout(() => {
+      void saveActivationFormDraft(buildSubmitPayload()).catch((draftError) => {
+        console.warn("activation draft autosave", draftError);
+      });
+    }, 12000);
+    return () => window.clearTimeout(timer);
+  }, [step, user?.id, saving, form, debts, activeSection]);
+
   const submitActivation = async () => {
     if (!user?.id) {
       setError("Sesión no encontrada. Inicia sesión nuevamente.");
@@ -333,7 +442,9 @@ export default function OnboardingPage() {
       setError("Por favor especifica la moneda en la pregunta 8.3.");
       return;
     }
-    if (form.currency !== form.activationCurrency) {
+    const currencyCode1 = resolveCurrencyCode(form.currency, form.currencyOther);
+    const currencyCode83 = resolveCurrencyCode(form.activationCurrency, form.activationCurrencyOther);
+    if (currencyCode1 !== currencyCode83) {
       setError("La moneda de la pregunta 8.3 debe ser la misma de la pregunta 1.5.");
       return;
     }
@@ -348,98 +459,41 @@ export default function OnboardingPage() {
     setError(null);
     setSaving(true);
     try {
-      const selectedCurrency =
-        form.currency === "Otra (especifica cuál)" ? form.currencyOther : form.currency;
-      const selectedActivationCurrency =
-        form.activationCurrency === "Otra (especifica cuál)"
-          ? form.activationCurrencyOther
-          : form.activationCurrency;
+      const payload = buildSubmitPayload();
+      await submitActivationFormWithRetry(user.id, payload);
+      markOnboardingDoneCache();
+      await refreshActivationFormStatus();
 
-      const fixedExpenses = sumNumbers(
-        form.housingExpense,
-        form.servicesExpense,
-        form.educationExpense,
-        form.healthExpense,
-        form.subscriptionsExpense,
-        form.fixedOtherExpense
-      );
-      const variableExpenses = sumNumbers(
-        form.foodExpense,
-        form.transportExpense,
-        form.entertainmentExpense,
-        form.unexpectedExpense
-      );
-
-      const { error: userProfileError } = await supabase.from("poupeja_users").upsert(
-        {
-          id: user.id,
-          email: form.email.trim(),
-          name: form.fullName.trim() || null,
-          phone: form.whatsapp.trim() || null,
-          country: form.country || null,
-          currency: selectedCurrency || selectedActivationCurrency || null,
-        },
-        { onConflict: "id" }
-      );
-      if (userProfileError) throw userProfileError;
-
-      const { error: profileError } = await supabase.from("poupeja_financial_profile").upsert(
-        {
-          user_id: user.id,
-          monthly_income: parseOptionalNumber(form.personalMonthlyIncome),
-          fixed_expenses: fixedExpenses || null,
-          variable_expenses: variableExpenses || null,
-          total_debt: form.hasDebts === "Sí" ? totalDebtAmount : 0,
-          monthly_savings: parseOptionalNumber(form.monthlySavingsAmount),
-          goal_12m: form.targetReason.trim() || null,
-          goal_amount: parseOptionalNumber(form.targetSavedOrInvested12m),
-          biggest_challenge: form.biggestMoneyFrustration.trim() || null,
-          completed_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      );
-      if (profileError) throw profileError;
-
-      const submittedAt = new Date().toISOString();
-      const fullPayload = {
-        ...form,
-        currency: selectedCurrency,
-        activationCurrency: selectedActivationCurrency,
-        debts: form.hasDebts === "Sí" ? debts : [],
-        submittedAt,
-      };
-
-      const { error: activationFormError } = await supabase
-        .from("poupeja_activation_forms")
-        .upsert(
-          {
-            user_id: user.id,
-            full_name: form.fullName.trim() || null,
-            email: form.email.trim() || null,
-            phone: form.whatsapp.trim() || null,
-            country: form.country || null,
-            currency: selectedCurrency || selectedActivationCurrency || null,
-            monthly_income: parseOptionalNumber(form.personalMonthlyIncome),
-            goal_amount: parseOptionalNumber(form.targetSavedOrInvested12m),
-            total_debt: form.hasDebts === "Sí" ? totalDebtAmount : 0,
-            form_data: fullPayload,
-            submitted_at: submittedAt,
-          },
-          { onConflict: "user_id" }
-        );
-      if (activationFormError) throw activationFormError;
+      toast({
+        title: "Formulario guardado",
+        description: "Tus respuestas quedaron registradas en el servidor.",
+      });
 
       setStep(3);
     } catch (submitError) {
       console.error("activation form submit error", submitError);
-      setError("No se pudo guardar el formulario. Intenta de nuevo.");
+      const message =
+        submitError instanceof Error
+          ? submitError.message
+          : "No se pudo guardar el formulario. Intenta de nuevo.";
+      setError(message);
+      toast({
+        title: "Error al guardar",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const finish = () => {
-    markOnboardingDone();
+  const finish = async () => {
+    const ok = await refreshActivationFormStatus();
+    if (!ok) {
+      setError("No se confirmó el guardado en el servidor. Vuelve a enviar el formulario.");
+      setStep(2);
+      return;
+    }
     navigate("/dashboard", { replace: true });
   };
 
@@ -663,7 +717,7 @@ export default function OnboardingPage() {
             </p>
             <p className="font-medium">No naciste para sobrevivir. Naciste para vivir en abundancia.</p>
             <p>Nos vemos dentro.</p>
-            <Button className="w-full" onClick={finish}>Ir al dashboard</Button>
+            <Button className="w-full" onClick={() => void finish()}>Ir al dashboard</Button>
           </Card>
         )}
       </div>

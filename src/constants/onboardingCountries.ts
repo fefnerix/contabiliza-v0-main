@@ -13,6 +13,7 @@ export type OnboardingCountryCode =
   | "VE"
   | "EC"
   | "PA"
+  | "CR"
   | "PT"
   | "US"
   | "ES";
@@ -42,6 +43,7 @@ export const ONBOARDING_LATAM_COUNTRIES: OnboardingCountry[] = [
   { code: "VE", name: "Venezuela", flag: "🇻🇪", phoneCode: "+58", currency: "VES", symbol: "Bs.", language: "es", timezone: "America/Caracas" },
   { code: "EC", name: "Ecuador", flag: "🇪🇨", phoneCode: "+593", currency: "USD", symbol: "$", language: "es", timezone: "America/Guayaquil" },
   { code: "PA", name: "Panamá", flag: "🇵🇦", phoneCode: "+507", currency: "USD", symbol: "$", language: "es", timezone: "America/Panama" },
+  { code: "CR", name: "Costa Rica", flag: "🇨🇷", phoneCode: "+506", currency: "CRC", symbol: "₡", language: "es", timezone: "America/Costa_Rica" },
 ];
 
 export const ONBOARDING_OTHER_COUNTRIES: OnboardingCountry[] = [

@@ -8,6 +8,7 @@ import {
   recalculateGoalAmounts as recalculateGoalAmountsService,
 } from '@/services/goalService';
 import { createLocalDate, sortTransactionsByDateDesc, toTransactionAmount } from '@/utils/transactionUtils';
+import { clearOnboardingDoneCache, syncOnboardingStatusFromDb } from '@/utils/onboarding';
 
 // Use database types directly from Supabase
 interface Category {
@@ -102,6 +103,9 @@ interface AppContextType {
   addScheduledTransaction: (transaction: Omit<ScheduledTransaction, 'id' | 'created_at'>) => Promise<void>;
   updateScheduledTransaction: (id: string, transaction: Partial<ScheduledTransaction>) => Promise<void>;
   deleteScheduledTransaction: (id: string) => Promise<void>;
+  /** null = ainda verificando no banco; false = formulário não enviado */
+  activationFormSubmitted: boolean | null;
+  refreshActivationFormStatus: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -208,6 +212,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const [activationFormSubmitted, setActivationFormSubmitted] = useState<boolean | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const isInitializedRef = useRef(isInitialized);
   const userIdRef = useRef<string | null>(null);
@@ -404,6 +409,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (session?.user) {
         dispatch({ type: 'SET_USER', payload: session.user });
+        setActivationFormSubmitted(null);
+        const submitted = await syncOnboardingStatusFromDb(session.user.id);
+        setActivationFormSubmitted(submitted);
 
         if (event === 'TOKEN_REFRESHED') {
           return;
@@ -414,6 +422,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       } else {
         dispatch({ type: 'SET_USER', payload: null });
+        setActivationFormSubmitted(null);
+        clearOnboardingDoneCache();
         dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
         dispatch({ type: 'SET_CATEGORIES', payload: [] });
         dispatch({ type: 'SET_GOALS', payload: [] });
@@ -543,9 +553,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     dispatch({ type: 'TOGGLE_HIDE_VALUES' });
   }, []);
 
+  const refreshActivationFormStatus = useCallback(async (): Promise<boolean> => {
+    const userId = userIdRef.current;
+    if (!userId) {
+      setActivationFormSubmitted(false);
+      return false;
+    }
+    const submitted = await syncOnboardingStatusFromDb(userId);
+    setActivationFormSubmitted(submitted);
+    return submitted;
+  }, []);
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     dispatch({ type: 'SET_USER', payload: null });
+    setActivationFormSubmitted(null);
+    clearOnboardingDoneCache();
   }, []);
 
   const setTimeRange = useCallback((range: string) => {
@@ -997,9 +1020,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addScheduledTransaction,
     updateScheduledTransaction,
     deleteScheduledTransaction,
+    activationFormSubmitted,
+    refreshActivationFormStatus,
   }), [
     state.user?.id,
     state.isLoading,
+    activationFormSubmitted,
+    refreshActivationFormStatus,
     state.transactions,
     state.categories,
     state.goals,
