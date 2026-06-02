@@ -116,6 +116,54 @@ export type Database = {
         }
         Relationships: []
       }
+      poupeja_activation_forms: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          form_data: Json
+          full_name: string | null
+          goal_amount: number | null
+          monthly_income: number | null
+          phone: string | null
+          submitted_at: string | null
+          total_debt: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          form_data?: Json
+          full_name?: string | null
+          goal_amount?: number | null
+          monthly_income?: number | null
+          phone?: string | null
+          submitted_at?: string | null
+          total_debt?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          form_data?: Json
+          full_name?: string | null
+          goal_amount?: number | null
+          monthly_income?: number | null
+          phone?: string | null
+          submitted_at?: string | null
+          total_debt?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       poupeja_goals: {
         Row: {
           color: string | null

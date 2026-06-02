@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail } from 'lucide-react';
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const ForgotPasswordPage = () => {
   const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
   const { t } = usePreferences();
-  const { logoUrl, logoAltText, companyName } = useBrandingConfig();
+  const { companyName } = useBrandingConfig();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,11 +46,7 @@ const ForgotPasswordPage = () => {
       {/* Left side with image/branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12">
         <div className="max-w-lg text-center">
-          <img 
-            src={logoUrl} 
-            alt={logoAltText} 
-            className="mx-auto mb-8 h-16"
-          />
+          <BrandLogo size="xl" className="mx-auto mb-8 justify-center" textClassName="text-white" />
           <h1 className="text-4xl font-bold text-white mb-4">{t('auth.welcomeBack')}</h1>
           <p className="text-white/80">
             {t('auth.journeyDescription')}
@@ -62,11 +59,7 @@ const ForgotPasswordPage = () => {
         <div className="w-full max-w-md">
           {/* Logo for mobile */}
           <div className="lg:hidden flex justify-center mb-8">
-            <img 
-              src={logoUrl} 
-              alt={logoAltText} 
-              className="h-12"
-            />
+            <BrandLogo size="lg" />
           </div>
           
           <div className="text-center mb-8">

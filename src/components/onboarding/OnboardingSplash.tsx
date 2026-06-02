@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MessageCircle, BarChart3, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBrandingConfig } from "@/hooks/useBrandingConfig";
+import { BrandLogo } from "@/components/common/BrandLogo";
 
 const bullets = [
   { icon: MessageCircle, text: "Manda un mensaje, nosotros lo anotamos" },
@@ -10,17 +11,13 @@ const bullets = [
 ];
 
 export function OnboardingSplash() {
-  const { companyName, logoUrl, logoAltText } = useBrandingConfig();
+  const { companyName } = useBrandingConfig();
   const displayName = companyName || "Contabiliza";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md flex flex-col items-center text-center">
-        <img
-          src={logoUrl || "/pwa-icons/icon-192x192.png"}
-          alt={logoAltText || displayName}
-          className="h-16 w-16 rounded-2xl object-contain mb-6"
-        />
+        <BrandLogo size="xl" className="mb-6" />
         <h1 className="text-2xl font-bold text-foreground mb-2">
           Tus finanzas en WhatsApp
         </h1>

@@ -7,7 +7,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Key, EyeOff, Eye } from 'lucide-react';
-import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const ResetPasswordPage = () => {
   const [newPassword, setNewPassword] = useState('');
@@ -17,7 +17,6 @@ const ResetPasswordPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const { t } = usePreferences();
-  const { logoUrl, logoAltText } = useBrandingConfig();
   const navigate = useNavigate();
 
   // Verificar se o usuário tem um token válido de redefinição de senha
@@ -106,11 +105,7 @@ const ResetPasswordPage = () => {
       {/* Left side with image/branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary items-center justify-center p-12">
         <div className="max-w-lg text-center">
-          <img 
-            src={logoUrl} 
-            alt={logoAltText} 
-            className="mx-auto mb-8 h-16"
-          />
+          <BrandLogo size="xl" className="mx-auto mb-8 justify-center" textClassName="text-white" />
           <h1 className="text-4xl font-bold text-white mb-4">{t('auth.welcomeBack')}</h1>
           <p className="text-white/80">
             {t('auth.journeyDescription')}
@@ -123,11 +118,7 @@ const ResetPasswordPage = () => {
         <div className="w-full max-w-md">
           {/* Logo for mobile */}
           <div className="lg:hidden flex justify-center mb-8">
-            <img 
-              src={logoUrl} 
-              alt={logoAltText} 
-              className="h-12"
-            />
+            <BrandLogo size="lg" />
           </div>
           
           <div className="text-center mb-8">

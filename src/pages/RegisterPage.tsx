@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { trackFacebookEvents } from '@/utils/facebookTracking';
 import { usePreferences, Currency, Language } from '@/contexts/PreferencesContext';
 import {
@@ -44,7 +45,7 @@ const FALLBACK_COUNTRY_DEFAULTS: { timezone: string; language: Language; currenc
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { companyName, logoUrl, logoAltText } = useBrandingConfig();
+  const { companyName } = useBrandingConfig();
   const {
     setCountry,
     setTimezone,
@@ -361,9 +362,8 @@ const RegisterPage = () => {
 
       <div className="w-full max-w-md bg-card p-8 rounded-xl shadow-2xl relative">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <img src={logoUrl} alt={logoAltText} className="h-12 w-auto" />
-            <span className="text-2xl font-bold text-primary">{companyName}</span>
+          <div className="mb-4">
+            <BrandLogo size="xl" />
           </div>
           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
             <PartyPopper className="h-7 w-7 text-primary" aria-hidden />

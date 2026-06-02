@@ -6,7 +6,7 @@ import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 interface MobileHeaderProps {
   hideValues: boolean;
@@ -19,7 +19,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   const { t } = usePreferences();
   const { logout } = useAppContext();
-  const { companyName, logoUrl, logoAltText } = useBrandingConfig();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -35,14 +34,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-background/95 backdrop-blur-sm border-b md:hidden">
       {/* Logo à esquerda */}
       <div className="flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <img 
-            src={logoUrl} 
-            alt={logoAltText}
-            className="h-6 w-6"
-          />
-          <span className="text-sm font-semibold text-primary">{companyName}</span>
-        </div>
+        <BrandLogo size="sm" />
       </div>
       
       {/* Botões à direita */}

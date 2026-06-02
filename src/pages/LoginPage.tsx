@@ -10,7 +10,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { loginUser } from '@/services/authService';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useBrandingConfig } from '@/hooks/useBrandingConfig';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { isOnboardingDone } from '@/utils/onboarding';
 
 const LoginPage = () => {
@@ -19,7 +19,6 @@ const LoginPage = () => {
   const { toast } = useToast();
   const { t } = usePreferences();
   const { user, isLoading: authLoading } = useAppContext();
-  const { logoUrl, logoAltText } = useBrandingConfig();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -142,11 +141,7 @@ const LoginPage = () => {
       {/* Left side with illustration and text */}
       <div className="hidden lg:flex flex-col w-1/2 bg-background p-10 justify-center">
         <div className="max-w-md mx-auto">
-          <img 
-            src={logoUrl} 
-            alt={logoAltText} 
-            className="h-16 mb-16" 
-          />
+          <BrandLogo size="xl" className="mb-16" />
           
           <div className="flex gap-8 items-center mb-8">
             <div>
@@ -166,11 +161,7 @@ const LoginPage = () => {
         <div className="w-full max-w-md">
           {/* Logo for mobile */}
           <div className="lg:hidden flex justify-center mt-0 pt-0 mb-4">
-            <img 
-              src={logoUrl} 
-              alt={logoAltText} 
-              className="h-10" 
-            />
+            <BrandLogo size="lg" />
           </div>
           
           <Card className="border-0 shadow-none">
