@@ -22,6 +22,9 @@ const formatDate = (iso: string | null) => {
   });
 };
 
+const isRecoveredFromSignup = (row: ActivationFormRow) =>
+  row.form_data?.recovered_from_signup === true;
+
 const formatMoney = (n: number | null, currency?: string | null) => {
   if (n == null) return "—";
   const suffix = currency ? ` ${currency}` : "";
@@ -48,7 +51,11 @@ const DetailSheet = ({
         <SheetHeader>
           <SheetTitle className="text-left">{row.full_name || row.email || "Formulario"}</SheetTitle>
           <p className="text-sm text-zinc-400 text-left">
-            Enviado: {formatDate(row.submitted_at)}
+            {row.submitted_at
+              ? `Enviado: ${formatDate(row.submitted_at)}`
+              : isRecoveredFromSignup(row)
+                ? "Recuperado del cadastro — formulario completo pendiente"
+                : "Borrador — aún no enviado"}
           </p>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-8rem)] mt-4 pr-3">
@@ -232,7 +239,13 @@ const AdminActivationFormsPage = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-zinc-400 text-sm">
-                        {formatDate(row.submitted_at)}
+                        {row.submitted_at ? (
+                          formatDate(row.submitted_at)
+                        ) : isRecoveredFromSignup(row) ? (
+                          <Badge className="bg-amber-500/20 text-amber-300">Recuperado (cadastro)</Badge>
+                        ) : (
+                          <Badge variant="secondary">Borrador</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
