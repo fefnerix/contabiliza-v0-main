@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { GrantAccessModal } from "@/components/admin/GrantAccessModal";
 import { AccessLogItem, AdminCustomer, getCustomerStatus, getHealthScore, useAdminCustomers } from "@/hooks/useAdminCustomers";
+import { ActivationFormRow, useAdminActivationForms } from "@/hooks/useAdminActivationForms";
+import { ACTIVATION_FORM_FIELD_LABELS, formatActivationFieldValue } from "@/lib/activationFormLabels";
 
 interface CustomerDrawerProps {
   open: boolean;
@@ -44,7 +47,9 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
     sendEmail,
   } =
     useAdminCustomers();
+  const { fetchByUserId } = useAdminActivationForms();
   const [history, setHistory] = useState<AccessLogItem[]>([]);
+  const [activationForm, setActivationForm] = useState<ActivationFormRow | null>(null);
   const [finance, setFinance] = useState<any>({ transactions: [], totals: { income: 0, expense: 0, balance: 0 }, counters: { goals: 0, categories: 0 } });
   const [emailHistory, setEmailHistory] = useState<any[]>([]);
   const [grantOpen, setGrantOpen] = useState(false);
@@ -65,14 +70,16 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
       if (!customer || !open) return;
       setLoading(true);
       try {
-        const [historyData, financeData, emailData] = await Promise.all([
+        const [historyData, financeData, emailData, formData] = await Promise.all([
           fetchAccessHistory(customer.id),
           fetchFinance(customer.id),
           fetchEmailHistory(customer.id),
+          fetchByUserId(customer.id),
         ]);
         setHistory(historyData);
         setFinance(financeData);
         setEmailHistory(emailData);
+        setActivationForm(formData);
         setForm({
           name: customer.name ?? "",
           email: customer.email,
@@ -89,7 +96,7 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
       }
     };
     loadData();
-  }, [customer, fetchAccessHistory, fetchEmailHistory, fetchFinance, open, toast]);
+  }, [customer, fetchAccessHistory, fetchByUserId, fetchEmailHistory, fetchFinance, open, toast]);
 
   const expiryText = useMemo(() => {
     if (!customer?.current_period_end) return "Sin fecha de expiración";
@@ -175,9 +182,10 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
           </SheetHeader>
 
           <Tabs defaultValue="access" className="mt-4">
-            <TabsList className="grid grid-cols-5">
+            <TabsList className="grid grid-cols-3 sm:grid-cols-6">
               <TabsTrigger value="access">Acceso</TabsTrigger>
               <TabsTrigger value="data">Datos</TabsTrigger>
+              <TabsTrigger value="activation">Formulario</TabsTrigger>
               <TabsTrigger value="history">Historial</TabsTrigger>
               <TabsTrigger value="finance">Finanzas</TabsTrigger>
               <TabsTrigger value="emails">Correos</TabsTrigger>
@@ -266,6 +274,41 @@ export const CustomerDrawer: React.FC<CustomerDrawerProps> = ({ open, onOpenChan
                   <p className="text-xl font-semibold">{finance.counters?.goals ?? 0} / {finance.counters?.categories ?? 0}</p>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="activation" className="mt-4 space-y-3">
+              {!activationForm ? (
+                <p className="text-sm text-muted-foreground rounded-lg border p-4">
+                  Este cliente aún no envió el formulario de activación.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Enviado:{" "}
+                    {activationForm.submitted_at
+                      ? new Date(activationForm.submitted_at).toLocaleString("es-419")
+                      : "—"}
+                  </p>
+                  <div className="max-h-80 overflow-y-auto space-y-2 rounded-lg border p-3">
+                    {Object.entries(activationForm.form_data).map(([key, value]) => (
+                      <div key={key} className="text-sm border-b border-border/50 pb-2 last:border-0">
+                        <p className="text-xs text-muted-foreground">
+                          {ACTIVATION_FORM_FIELD_LABELS[key] ?? key}
+                        </p>
+                        <p className="whitespace-pre-wrap break-words">
+                          {formatActivationFieldValue(value) || "—"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <Link
+                    to="/admin/activation-forms"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Ver todos los formularios y exportar
+                  </Link>
+                </>
+              )}
             </TabsContent>
 
             <TabsContent value="history" className="mt-4">

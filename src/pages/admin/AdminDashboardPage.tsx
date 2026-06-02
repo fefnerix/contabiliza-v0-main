@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Activity, CalendarClock, RefreshCw, TriangleAlert, UserPlus } from "lucide-react";
+import { Activity, CalendarClock, ClipboardList, RefreshCw, TriangleAlert, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,9 +43,17 @@ const AdminDashboardPage = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" />Nuevos registros</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.newUsers}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.newUsers)} vs ayer</p></CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" />Activaciones hoy</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.activatedToday}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.activatedToday)} vs ayer</p></CardContent></Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="h-4 w-4" />Formularios hoy</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{dayStats.activationFormsToday}</p>
+            <p className="text-xs text-zinc-400">{delta(dayStats.deltas.activationFormsToday)} vs ayer · total {dayStats.activationFormsTotal}</p>
+            <Link to="/admin/activation-forms" className="text-xs text-emerald-400 mt-2 inline-block">Ver y descargar</Link>
+          </CardContent>
+        </Card>
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><TriangleAlert className="h-4 w-4" />Errores webhook</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.webhookErrors}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.webhookErrors)} vs ayer</p></CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><CalendarClock className="h-4 w-4" />Expiran en 7 días</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{dayStats.expiringSoon}</p><p className="text-xs text-zinc-400">{delta(dayStats.deltas.expiringSoon)} vs ayer</p></CardContent></Card>
       </div>

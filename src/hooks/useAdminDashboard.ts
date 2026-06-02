@@ -41,7 +41,9 @@ export const useAdminDashboard = () => {
     activatedToday: 0,
     webhookErrors: 0,
     expiringSoon: 0,
-    deltas: { newUsers: 0, activatedToday: 0, webhookErrors: 0, expiringSoon: 0 },
+    activationFormsToday: 0,
+    activationFormsTotal: 0,
+    deltas: { newUsers: 0, activatedToday: 0, webhookErrors: 0, expiringSoon: 0, activationFormsToday: 0 },
   });
   const [revenue, setRevenue] = useState({
     mrr: 0,
@@ -77,6 +79,9 @@ export const useAdminDashboard = () => {
       errorsYesterday,
       expiringToday,
       expiringYesterday,
+      formsToday,
+      formsYesterday,
+      formsTotal,
     ] = await Promise.all([
       adminDb.from("poupeja_users").select("id", { count: "exact", head: true }).gte("created_at", today.start).lte("created_at", today.end),
       adminDb.from("poupeja_users").select("id", { count: "exact", head: true }).gte("created_at", yesterday.start).lte("created_at", yesterday.end),
@@ -86,6 +91,19 @@ export const useAdminDashboard = () => {
       adminDb.from("poupeja_webhook_events").select("id", { count: "exact", head: true }).not("error", "is", null).gte("created_at", yesterday.start).lte("created_at", yesterday.end),
       adminDb.from("poupeja_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active").gte("current_period_end", new Date().toISOString()).lte("current_period_end", in7),
       adminDb.from("poupeja_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active").gte("current_period_end", yesterday.start).lte("current_period_end", new Date(yesterday.end).toISOString()),
+      adminDb
+        .from("poupeja_activation_forms")
+        .select("user_id", { count: "exact", head: true })
+        .not("submitted_at", "is", null)
+        .gte("submitted_at", today.start)
+        .lte("submitted_at", today.end),
+      adminDb
+        .from("poupeja_activation_forms")
+        .select("user_id", { count: "exact", head: true })
+        .not("submitted_at", "is", null)
+        .gte("submitted_at", yesterday.start)
+        .lte("submitted_at", yesterday.end),
+      adminDb.from("poupeja_activation_forms").select("user_id", { count: "exact", head: true }),
     ]);
 
     setDayStats({
@@ -93,11 +111,14 @@ export const useAdminDashboard = () => {
       activatedToday: activatedToday.count ?? 0,
       webhookErrors: errorsToday.count ?? 0,
       expiringSoon: expiringToday.count ?? 0,
+      activationFormsToday: formsToday.count ?? 0,
+      activationFormsTotal: formsTotal.count ?? 0,
       deltas: {
         newUsers: (usersToday.count ?? 0) - (usersYesterday.count ?? 0),
         activatedToday: (activatedToday.count ?? 0) - (activatedYesterday.count ?? 0),
         webhookErrors: (errorsToday.count ?? 0) - (errorsYesterday.count ?? 0),
         expiringSoon: (expiringToday.count ?? 0) - (expiringYesterday.count ?? 0),
+        activationFormsToday: (formsToday.count ?? 0) - (formsYesterday.count ?? 0),
       },
     });
   }, []);

@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   BarChart3,
+  ClipboardList,
   CreditCard,
   FileText,
   LayoutDashboard,
@@ -26,6 +27,7 @@ import { InfraStatusProvider, useInfraStatusContext } from "@/contexts/InfraStat
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Clientes", href: "/admin/customers", icon: Users2 },
+  { label: "Formularios", href: "/admin/activation-forms", icon: ClipboardList },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Planos", href: "/admin/plans", icon: CreditCard },
   { label: "Checkouts", href: "/admin/checkouts", icon: Webhook },

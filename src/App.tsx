@@ -42,6 +42,7 @@ import AdminContentPage from "./pages/admin/AdminContentPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminLogsPage from "./pages/admin/AdminLogsPage";
 import AdminAuditPage from "./pages/admin/AdminAuditPage";
+import AdminActivationFormsPage from "./pages/admin/AdminActivationFormsPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AchievementsPage from "./pages/AchievementsPage";
 import NotFound from "./pages/NotFound";
@@ -192,6 +193,7 @@ function App() {
                             <Route index element={<Navigate to="/admin/dashboard" replace />} />
                             <Route path="dashboard" element={<AdminDashboardPage />} />
                             <Route path="customers" element={<AdminCustomersPage />} />
+                            <Route path="activation-forms" element={<AdminActivationFormsPage />} />
                             <Route path="analytics" element={<AdminAnalyticsPage />} />
                             <Route path="plans" element={<AdminPlansPage />} />
                             <Route path="checkouts" element={<AdminCheckoutsPage />} />
