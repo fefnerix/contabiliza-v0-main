@@ -16,7 +16,8 @@ const ContactConfigManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   const [formData, setFormData] = useState({
-    contactPhone: '',
+    whatsappBotPhone: '',
+    whatsappSupportPhone: '',
     supportEmail: '',
     whatsappMessage: '',
   });
@@ -33,7 +34,8 @@ const ContactConfigManager: React.FC = () => {
       if (data?.success && data?.settings) {
         const contactSettings = data.settings.contact || {};
         setFormData({
-          contactPhone: contactSettings.contact_phone?.value || '',
+          whatsappBotPhone: contactSettings.contact_phone?.value || '',
+          whatsappSupportPhone: contactSettings.contact_whatsapp?.value || '',
           supportEmail: contactSettings.support_email?.value || '',
           whatsappMessage: contactSettings.whatsapp_message?.value || '¡Hola! Necesito ayuda con Contabiliza.',
         });
@@ -66,7 +68,8 @@ const ContactConfigManager: React.FC = () => {
         body: {
           category: 'contact',
           updates: {
-            contact_phone: formData.contactPhone,
+            contact_phone: formData.whatsappBotPhone,
+            contact_whatsapp: formData.whatsappSupportPhone,
             support_email: formData.supportEmail,
             whatsapp_message: formData.whatsappMessage,
           }
@@ -155,23 +158,37 @@ const ContactConfigManager: React.FC = () => {
             <MessageCircle className="h-5 w-5" />
             WhatsApp
           </h3>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="contactPhone">Número de WhatsApp</Label>
+            <Label htmlFor="whatsappBotPhone">Contabiliza AI — registrar transacciones</Label>
             <Input
-              id="contactPhone"
-              value={formData.contactPhone}
-              onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-              placeholder="5511945676825"
+              id="whatsappBotPhone"
+              value={formData.whatsappBotPhone}
+              onChange={(e) => handleInputChange("whatsappBotPhone", e.target.value)}
+              placeholder="5511936235098"
               disabled={isUpdating}
             />
             <p className="text-xs text-gray-500">
-              Número con código del país (ej: 55 para Brasil + DDD + número)
+              Número del bot (topbar del dashboard). Solo dígitos con código de país.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="whatsappMessage">Mensaje Predeterminado de WhatsApp</Label>
+            <Label htmlFor="whatsappSupportPhone">WhatsApp de soporte</Label>
+            <Input
+              id="whatsappSupportPhone"
+              value={formData.whatsappSupportPhone}
+              onChange={(e) => handleInputChange("whatsappSupportPhone", e.target.value)}
+              placeholder="5524981537082"
+              disabled={isUpdating}
+            />
+            <p className="text-xs text-gray-500">
+              Atención humana (botón en la barra lateral).
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="whatsappMessage">Mensaje predeterminado (activación / pagos)</Label>
             <Input
               id="whatsappMessage"
               value={formData.whatsappMessage}
@@ -184,11 +201,19 @@ const ContactConfigManager: React.FC = () => {
             </p>
           </div>
 
-          {formData.contactPhone && (
+          {formData.whatsappBotPhone && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-blue-800 text-sm font-medium mb-1">Vista Previa del Enlace:</p>
+              <p className="text-blue-800 text-sm font-medium mb-1">Vista previa — bot (registro):</p>
               <p className="text-blue-700 text-xs font-mono break-all">
-                https://wa.me/{formData.contactPhone}?text={encodeURIComponent(formData.whatsappMessage)}
+                https://wa.me/{formData.whatsappBotPhone}
+              </p>
+            </div>
+          )}
+          {formData.whatsappSupportPhone && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+              <p className="text-blue-800 text-sm font-medium mb-1">Vista previa — soporte:</p>
+              <p className="text-blue-700 text-xs font-mono break-all">
+                https://wa.me/{formData.whatsappSupportPhone}
               </p>
             </div>
           )}

@@ -1,11 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { OnboardingSplash } from "@/components/OnboardingSplash";
 import { useAppContext } from "@/contexts/AppContext";
+import { isActivationFormEnabled } from "@/utils/onboarding";
 
 export default function HomeRoute() {
   const { user, isLoading, activationFormSubmitted } = useAppContext();
+  const formGate = isActivationFormEnabled();
 
-  if (isLoading || (user && activationFormSubmitted === null)) {
+  if (isLoading || (formGate && user && activationFormSubmitted === null)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
@@ -14,7 +16,7 @@ export default function HomeRoute() {
   }
 
   if (user) {
-    if (!activationFormSubmitted) return <Navigate to="/onboarding" replace />;
+    if (formGate && !activationFormSubmitted) return <Navigate to="/onboarding" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 

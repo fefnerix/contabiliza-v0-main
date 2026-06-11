@@ -204,9 +204,9 @@ const AdminSettingsPage = () => {
           <Card>
             <CardHeader><CardTitle>Contato e suporte</CardTitle></CardHeader>
             <CardContent className="grid md:grid-cols-3 gap-3">
-              <div><Label>WhatsApp suporte</Label><Input value={integrationsForm.contact_whatsapp} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_whatsapp: e.target.value }))} /></div>
-              <div><Label>Email contato</Label><Input value={integrationsForm.contact_email} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_email: e.target.value }))} /></div>
-              <div><Label>Telefone contato</Label><Input value={integrationsForm.contact_phone} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_phone: e.target.value }))} /></div>
+              <div><Label>WhatsApp soporte</Label><Input value={integrationsForm.contact_whatsapp} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_whatsapp: e.target.value }))} placeholder="5524981537082" /></div>
+              <div><Label>Email soporte</Label><Input value={integrationsForm.contact_email} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_email: e.target.value }))} /></div>
+              <div><Label>WhatsApp bot (transacciones)</Label><Input value={integrationsForm.contact_phone} onChange={(e) => setIntegrationsForm((i) => ({ ...i, contact_phone: e.target.value }))} placeholder="5511936235098" /></div>
             </CardContent>
           </Card>
 

@@ -4,8 +4,8 @@ import Sidebar from './Sidebar';
 import MobileNavBar from './MobileNavBar';
 import MobileHeader from './MobileHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
-import WhatsAppActivationButton from '@/components/common/WhatsAppActivationButton';
 import { InjectFacebookPixel } from '@/components/common/InjectFacebookPixel';
+import { WhatsAppRegisterTopbar } from '@/components/contact/WhatsAppRegisterTopbar';
 
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -39,7 +39,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <InjectFacebookPixel />
       {isMobile ? <div className="flex flex-col min-h-screen w-full">
           <MobileHeader hideValues={hideValues} toggleHideValues={toggleHideValues} />
-          <main className="flex-1 overflow-y-auto p-4 pb-20 pt-20 w-full">
+          <main className="flex-1 overflow-y-auto p-4 pb-20 pt-[7.25rem] w-full">
             {title && (
               <div className="mb-6">
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
@@ -61,9 +61,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             </div>
           </main>
         </div>}
-      
-      {/* WhatsApp Floating Button */}
-      <WhatsAppActivationButton />
     </div>;
 };
 

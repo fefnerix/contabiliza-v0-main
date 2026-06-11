@@ -9,6 +9,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { LayoutDashboard, Receipt, BarChart3, Target, User, Settings, FolderOpen, Calendar, Crown, LogOut, Shield, Users2, Webhook } from 'lucide-react';
+import { SupportWhatsAppButton } from '@/components/contact/SupportWhatsAppButton';
 
 interface SidebarProps {
   onProfileClick?: () => void;
@@ -222,6 +223,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onProfileClick, onConfigClick }) => {
 
         {/* Bottom Navigation - Always visible */}
         <div className="p-4 border-t space-y-2 flex-shrink-0 bg-background">
+          <SupportWhatsAppButton />
+
           {bottomMenuItems.map((item) => (
             <NavLink
               key={item.href}

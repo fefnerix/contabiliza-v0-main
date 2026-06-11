@@ -8,7 +8,12 @@ import {
   recalculateGoalAmounts as recalculateGoalAmountsService,
 } from '@/services/goalService';
 import { createLocalDate, sortTransactionsByDateDesc, toTransactionAmount } from '@/utils/transactionUtils';
-import { clearOnboardingDoneCache, syncOnboardingStatusFromDb } from '@/utils/onboarding';
+import {
+  clearOnboardingDoneCache,
+  isActivationFormEnabled,
+  markOnboardingDoneCache,
+  syncOnboardingStatusFromDb,
+} from '@/utils/onboarding';
 
 // Use database types directly from Supabase
 interface Category {
@@ -212,7 +217,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const [activationFormSubmitted, setActivationFormSubmitted] = useState<boolean | null>(null);
+  const [activationFormSubmitted, setActivationFormSubmitted] = useState<boolean | null>(
+    isActivationFormEnabled() ? null : true,
+  );
   const [isInitialized, setIsInitialized] = useState(false);
   const isInitializedRef = useRef(isInitialized);
   const userIdRef = useRef<string | null>(null);
@@ -409,9 +416,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (session?.user) {
         dispatch({ type: 'SET_USER', payload: session.user });
-        setActivationFormSubmitted(null);
-        const submitted = await syncOnboardingStatusFromDb(session.user.id);
-        setActivationFormSubmitted(submitted);
+        if (!isActivationFormEnabled()) {
+          markOnboardingDoneCache();
+          setActivationFormSubmitted(true);
+        } else {
+          setActivationFormSubmitted(null);
+          const submitted = await syncOnboardingStatusFromDb(session.user.id);
+          setActivationFormSubmitted(submitted);
+        }
 
         if (event === 'TOKEN_REFRESHED') {
           return;
@@ -558,6 +570,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!userId) {
       setActivationFormSubmitted(false);
       return false;
+    }
+    if (!isActivationFormEnabled()) {
+      markOnboardingDoneCache();
+      setActivationFormSubmitted(true);
+      return true;
     }
     const submitted = await syncOnboardingStatusFromDb(userId);
     setActivationFormSubmitted(submitted);

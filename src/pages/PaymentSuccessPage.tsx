@@ -227,7 +227,7 @@ const PaymentSuccessPage = () => {
             Tu pago fue procesado con éxito, pero la cuenta puede necesitar ser creada manualmente.
           </p>
           <Button 
-            onClick={() => window.open(`https://wa.me/${contactConfig.contactPhone}?text=Necesito%20ayuda%20con%20mi%20cuenta%20después%20del%20pago`, '_blank')}
+            onClick={() => window.open(`https://wa.me/${contactConfig.whatsappSupportPhone || contactConfig.contactPhone}?text=Necesito%20ayuda%20con%20mi%20cuenta%20después%20del%20pago`, '_blank')}
             className="w-full"
             variant="outline"
           >
@@ -255,7 +255,7 @@ const PaymentSuccessPage = () => {
     
     const message = encodeURIComponent(formatMessage(userEmail, planType));
     
-    window.open(`https://wa.me/${contactConfig.contactPhone}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${contactConfig.whatsappBotPhone || contactConfig.contactPhone}?text=${message}`, '_blank');
   };
 
   const handleAccessApp = () => {

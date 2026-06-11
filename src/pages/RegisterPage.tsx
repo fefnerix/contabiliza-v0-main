@@ -14,7 +14,7 @@ import {
   getOnboardingCountry,
   normalizeWhatsAppDigits,
 } from '@/constants/onboardingCountries';
-import { clearOnboardingDone } from '@/utils/onboarding';
+import { clearOnboardingDone, getPostAuthPath, isActivationFormEnabled } from '@/utils/onboarding';
 import {
   Select,
   SelectContent,
@@ -332,9 +332,11 @@ const RegisterPage = () => {
       trackFacebookEvents.completeRegistration('email');
       toast({
         title: '¡Cuenta creada!',
-        description: 'Completa la activación en los próximos pasos.',
+        description: isActivationFormEnabled()
+          ? 'Completa la activación en los próximos pasos.'
+          : 'Ya puedes usar Contabiliza.',
       });
-      navigate('/onboarding', { replace: true });
+      navigate(getPostAuthPath(), { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error desconocido.');
     } finally {

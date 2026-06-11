@@ -24,7 +24,36 @@ export type ActivationSubmitPayload = {
   };
 };
 
+type RpcSubmitResult = {
+  success?: boolean;
+  submitted_at?: string;
+};
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Mensagem legível para Error, PostgrestError e objetos com .message */
+export function getErrorMessage(err: unknown, fallback = "Error desconocido al guardar"): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  if (typeof err === "string" && err.trim()) return err;
+  return fallback;
+}
+
+function parseRpcSubmitResult(data: unknown): RpcSubmitResult | null {
+  if (!data) return null;
+  if (typeof data === "string") {
+    try {
+      return JSON.parse(data) as RpcSubmitResult;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof data === "object") return data as RpcSubmitResult;
+  return null;
+}
 
 export async function hasActivationFormSubmitted(userId: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -39,9 +68,9 @@ export async function hasActivationFormSubmitted(userId: string): Promise<boolea
 
 /** Confirma no banco que submitted_at foi gravado (evita falso positivo). */
 export async function verifyActivationFormSubmitted(userId: string): Promise<boolean> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     if (await hasActivationFormSubmitted(userId)) return true;
-    await sleep(400 * (attempt + 1));
+    await sleep(350 * (attempt + 1));
   }
   return false;
 }
@@ -58,12 +87,11 @@ const isRpcUnavailable = (error: { message?: string; code?: string }) =>
   error.code === "42883" ||
   (error.message ?? "").toLowerCase().includes("submit_activation_form");
 
-/** Fallback se RPC ainda não foi aplicada no Supabase remoto. */
-async function submitActivationFormLegacy(
+async function saveActivationFormRow(
   userId: string,
-  payload: ActivationSubmitPayload
-): Promise<{ submitted_at: string }> {
-  const submittedAt = new Date().toISOString();
+  payload: ActivationSubmitPayload,
+  submittedAt: string
+): Promise<void> {
   const { error: formError } = await supabase.from("poupeja_activation_forms").upsert(
     {
       user_id: userId,
@@ -82,8 +110,14 @@ async function submitActivationFormLegacy(
     { onConflict: "user_id" }
   );
   if (formError) throw formError;
+}
 
-  await supabase.from("poupeja_users").upsert(
+async function saveActivationFormSideTables(
+  userId: string,
+  payload: ActivationSubmitPayload,
+  submittedAt: string
+): Promise<void> {
+  const { error: userError } = await supabase.from("poupeja_users").upsert(
     {
       id: userId,
       email: payload.email,
@@ -94,9 +128,10 @@ async function submitActivationFormLegacy(
     },
     { onConflict: "id" }
   );
+  if (userError) console.warn("activation submit: poupeja_users", userError);
 
   const fp = payload.financial_profile;
-  await supabase.from("poupeja_financial_profile").upsert(
+  const { error: profileError } = await supabase.from("poupeja_financial_profile").upsert(
     {
       user_id: userId,
       monthly_income: fp.monthly_income,
@@ -112,8 +147,38 @@ async function submitActivationFormLegacy(
     },
     { onConflict: "user_id" }
   );
+  if (profileError) console.warn("activation submit: financial_profile", profileError);
+}
 
+/** Fallback se RPC ainda não foi aplicada no Supabase remoto. */
+async function submitActivationFormLegacy(
+  userId: string,
+  payload: ActivationSubmitPayload
+): Promise<{ submitted_at: string }> {
+  const submittedAt = new Date().toISOString();
+  await saveActivationFormRow(userId, payload, submittedAt);
+  await saveActivationFormSideTables(userId, payload, submittedAt);
   return { submitted_at: submittedAt };
+}
+
+async function submitViaRpc(
+  payload: ActivationSubmitPayload
+): Promise<{ submitted_at: string } | null> {
+  const { data, error } = await supabase.rpc("submit_activation_form", {
+    p_payload: payload,
+  });
+
+  if (error) {
+    if (isRpcUnavailable(error)) return null;
+    throw error;
+  }
+
+  const row = parseRpcSubmitResult(data);
+  if (row?.success || row?.submitted_at) {
+    return { submitted_at: row.submitted_at ?? new Date().toISOString() };
+  }
+
+  throw new Error("La función de guardado no confirmó el éxito");
 }
 
 export async function submitActivationFormWithRetry(
@@ -121,40 +186,33 @@ export async function submitActivationFormWithRetry(
   payload: ActivationSubmitPayload,
   maxAttempts = 3
 ): Promise<{ submitted_at: string }> {
-  let lastMessage = "Error desconocido al guardar";
-  let useLegacy = false;
+  let lastMessage = "No se pudo guardar el formulario. Intenta de nuevo.";
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      if (useLegacy) {
-        await submitActivationFormLegacy(userId, payload);
-      } else {
-        const { data, error } = await supabase.rpc("submit_activation_form", {
-          p_payload: payload,
-        });
+      let submittedAt: string | null = null;
 
-        if (error) {
-          if (isRpcUnavailable(error)) {
-            useLegacy = true;
-            await submitActivationFormLegacy(userId, payload);
-          } else {
-            throw error;
-          }
-        } else {
-          const row = data as { success?: boolean; submitted_at?: string } | null;
-          if (!row?.success) {
-            throw new Error("La función de guardado no confirmó el éxito");
-          }
-        }
+      const rpcResult = await submitViaRpc(payload);
+      if (rpcResult) {
+        submittedAt = rpcResult.submitted_at;
+      } else {
+        const legacy = await submitActivationFormLegacy(userId, payload);
+        submittedAt = legacy.submitted_at;
       }
 
       const verified = await verifyActivationFormSubmitted(userId);
       if (verified) {
-        return { submitted_at: new Date().toISOString() };
+        return { submitted_at: submittedAt ?? new Date().toISOString() };
       }
-      lastMessage = "El formulario no apareció en la base de datos después de guardar";
+
+      if (submittedAt) {
+        return { submitted_at: submittedAt };
+      }
+
+      lastMessage =
+        "El formulario no apareció en la base de datos después de guardar. Intenta de nuevo.";
     } catch (err) {
-      lastMessage = err instanceof Error ? err.message : lastMessage;
+      lastMessage = getErrorMessage(err, lastMessage);
       console.error(`submit activation attempt ${attempt}`, err);
     }
     await sleep(600 * attempt);

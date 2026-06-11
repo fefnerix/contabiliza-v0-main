@@ -15,8 +15,8 @@ const WhatsAppActivationButton: React.FC = () => {
   const handleActivateAccount = () => {
     if (isLoading) return;
     
-    const phoneNumber = config.contactPhone;
-    const message = encodeURIComponent('Quiero activar mi cuenta');
+    const phoneNumber = config.whatsappSupportPhone || config.contactPhone;
+    const message = encodeURIComponent('Hola, necesito ayuda con mi cuenta en Contabiliza.');
     
     console.log('WhatsApp activation (common):', { 
       phoneNumber,

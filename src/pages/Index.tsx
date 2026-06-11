@@ -4,6 +4,8 @@ import MainLayout from '@/components/layout/MainLayout';
 import SubscriptionGuard from '@/components/subscription/SubscriptionGuard';
 import TransactionForm from '@/components/common/TransactionForm';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import { ActivationFormReminder } from '@/components/onboarding/ActivationFormReminder';
+import { WhatsAppRegisterTopbar } from '@/components/contact/WhatsAppRegisterTopbar';
 import DashboardStatCards from '@/components/dashboard/DashboardStatCards';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 import { useAppContext } from '@/contexts/AppContext';
@@ -162,6 +164,12 @@ const Index = () => {
             toggleHideValues={toggleHideValues}
             onAddTransaction={handleAddTransaction}
           />
+
+          <motion.div variants={itemVariants}>
+            <WhatsAppRegisterTopbar variant="desktop" className="shadow-sm" />
+          </motion.div>
+
+          <ActivationFormReminder />
           
           <motion.div variants={itemVariants}>
             <DashboardStatCards

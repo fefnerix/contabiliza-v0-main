@@ -13,9 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type ActivationSubmitPayload,
+  getErrorMessage,
   saveActivationFormDraft,
   submitActivationFormWithRetry,
 } from "@/services/activationFormService";
+import { WhatsAppRegisterTopbar } from "@/components/contact/WhatsAppRegisterTopbar";
 
 type DebtItem = {
   name: string;
@@ -248,6 +250,13 @@ export default function OnboardingPage() {
   const [debts, setDebts] = useState<DebtItem[]>([emptyDebt()]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    void refreshActivationFormStatus().then((complete) => {
+      if (complete) navigate("/dashboard", { replace: true });
+    });
+  }, [user?.id, refreshActivationFormStatus, navigate]);
+
+  useEffect(() => {
     let mounted = true;
 
     const prefillFromUser = async () => {
@@ -472,10 +481,10 @@ export default function OnboardingPage() {
       setStep(3);
     } catch (submitError) {
       console.error("activation form submit error", submitError);
-      const message =
-        submitError instanceof Error
-          ? submitError.message
-          : "No se pudo guardar el formulario. Intenta de nuevo.";
+      const message = getErrorMessage(
+        submitError,
+        "No se pudo guardar el formulario. Intenta de nuevo."
+      );
       setError(message);
       toast({
         title: "Error al guardar",
@@ -715,6 +724,7 @@ export default function OnboardingPage() {
             <p className="text-muted-foreground">
               Mientras tanto, activa tu Contabiliza AI y empieza a registrar tus gastos desde hoy.
             </p>
+            <WhatsAppRegisterTopbar variant="desktop" className="text-left" />
             <p className="font-medium">No naciste para sobrevivir. Naciste para vivir en abundancia.</p>
             <p>Nos vemos dentro.</p>
             <Button className="w-full" onClick={() => void finish()}>Ir al dashboard</Button>

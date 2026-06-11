@@ -11,7 +11,7 @@ import { loginUser } from '@/services/authService';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { syncOnboardingStatusFromDb } from '@/utils/onboarding';
+import { isActivationFormEnabled, getPostAuthPath, syncOnboardingStatusFromDb } from '@/utils/onboarding';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -33,20 +33,18 @@ const LoginPage = () => {
   }, [user, authLoading, navigate, location.search]);
 
   const checkUserRoleAndRedirect = async (userId: string) => {
+    const redirectTo = new URLSearchParams(location.search).get('redirect');
+
     try {
-      // Use the new verify-admin-access function to check role safely
       const { data: response, error } = await supabase.functions.invoke('verify-admin-access');
 
       if (error) {
         console.error('Error checking user role:', error);
-        navigate('/dashboard', { replace: true });
+        navigate(getPostAuthPath(redirectTo), { replace: true });
         return;
       }
 
-      const redirectTo = new URLSearchParams(location.search).get('redirect');
-
       if (response?.success && response?.isAdmin) {
-        console.log('Redirecionando admin');
         if (redirectTo) {
           navigate(redirectTo === '/admin' ? '/admin/dashboard' : redirectTo, { replace: true });
         } else {
@@ -55,21 +53,18 @@ const LoginPage = () => {
         return;
       }
 
-      const onboardingDone = await syncOnboardingStatusFromDb(userId);
-      if (!onboardingDone) {
-        navigate('/onboarding', { replace: true });
-        return;
+      if (isActivationFormEnabled()) {
+        const onboardingDone = await syncOnboardingStatusFromDb(userId);
+        if (!onboardingDone) {
+          navigate('/onboarding', { replace: true });
+          return;
+        }
       }
 
-      if (redirectTo && redirectTo !== '/login' && redirectTo !== '/register') {
-        navigate(redirectTo, { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate(getPostAuthPath(redirectTo), { replace: true });
     } catch (error) {
       console.error('Error checking user role:', error);
-      const onboardingDone = await syncOnboardingStatusFromDb(userId);
-      navigate(onboardingDone ? '/dashboard' : '/onboarding', { replace: true });
+      navigate(getPostAuthPath(redirectTo), { replace: true });
     }
   };
 

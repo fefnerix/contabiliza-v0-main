@@ -20,7 +20,7 @@ const WhatsAppActivationButton: React.FC<WhatsAppActivationButtonProps> = ({
 
   const handleActivation = () => {
     // Use dynamic phone and message from config, prioritize config over props
-    const phoneNumber = config.contactPhone || phone;
+    const phoneNumber = config.whatsappBotPhone || config.contactPhone || phone;
     const message = encodeURIComponent(formatMessage(email, planType));
     
     console.log('WhatsApp activation:', { 
